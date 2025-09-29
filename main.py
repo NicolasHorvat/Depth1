@@ -2,10 +2,12 @@ import sys
 import os
 
 # reminder to start the virtual environment
-if not sys.prefix.endswith('env1'):
-    print("Warning: Not running inside 'env1' virtual environment")
+if not sys.prefix.endswith('Depth1_venv'):
+    print("Warning: Not running inside 'Depth1_venv' virtual environment")
 
 # or start it like this
+# Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process
+# .\Depth1_venv\Scripts\Activate
 # venv (.\env1\Scripts\python.exe .\main.py)
 
 import torch
@@ -14,13 +16,17 @@ from dataset import CanyonDataset, CanyonDatasetWithPrior
 from dataset import split_dataset
 from train import train_model
 from test import test_model
-from model import DepthNet, DepthNetWithPrior
 
 import matplotlib.pyplot as plt
+from datetime import datetime
+
+from model import DepthNet, DepthNetWithPrior
 
 # Paths
+# reminder to change the canyons folder path
+print("(Riminder to change the canyons folder path)")
 # canyons_path = r"C:\Users\nicol\ETH\Master_Thesis\canyons" # path to canyons data from FLSea VI
-canyons_path = r"D:\canyons" # path to canyons data from FLSea VI on ssdmy SSD
+canyons_path = r"H:\canyons" # path to canyons data from FLSea VI on my SSD
 
 # paths to the different folders
 flatiron_path = os.path.join(canyons_path, "flatiron")
@@ -43,15 +49,26 @@ u_canyon_depth_path = os.path.join(u_canyon_path, "depth")
 u_canyon_imgs_path = os.path.join(u_canyon_path, "imgs")
 u_canyon_seaErra_path = os.path.join(u_canyon_path, "seaErra")
 
-def main_DepthNet():
 
-    print("\n----- START -----")
+
+# create a folder to save plots for organization
+run_name = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+results_folder = os.path.join("results", run_name)
+os.makedirs(results_folder, exist_ok=True)
+print(f"Saving results to: {results_folder}")
+
+
+def main_DepthNet():
+    '''Main function for training without prior knowlage'''
+
+    print("\n----- START (without Prior) -----")
 
     print("\nLoading Data & Splitting Dataset...")
-    full_dataset = CanyonDataset(rgb_folder=tiny_canyon_seaErra_path, depth_folder=tiny_canyon_depth_path)
+    # select data to be used:
+    dataset = CanyonDataset(rgb_folder=tiny_canyon_seaErra_path, depth_folder=tiny_canyon_depth_path)
 
     # for faster training/testing 
-    num_imgs_list = [1000] # Array to train on diffenent sizes of the dataset
+    num_imgs_list = [20] # Array to train on diffenent sizes of the dataset
 
     all_losses = {}
 
@@ -59,28 +76,28 @@ def main_DepthNet():
         print(f"\n(Using {num_imgs} images)")
 
         # randomly select a subset
-        indices = torch.randperm(len(full_dataset))[:num_imgs].tolist() # selectrandom idices
-        subset_rgb = [full_dataset.rgb_files[i] for i in indices]       # select coresponding rgb imgs 
-        subset_depth = [full_dataset.depth_files[i] for i in indices]   # select coresponding depth imgs
+        indices = torch.randperm(len(dataset))[:num_imgs].tolist() # selectrandom idices
+        subset_rgb = [dataset.rgb_files[i] for i in indices]       # select coresponding rgb imgs 
+        subset_depth = [dataset.depth_files[i] for i in indices]   # select coresponding depth imgs
 
-        subset_dataset = CanyonDataset(rgb_folder=tiny_canyon_seaErra_path, depth_folder=tiny_canyon_depth_path)
-        subset_dataset.rgb_files = subset_rgb
-        subset_dataset.depth_files = subset_depth
+        dataset.rgb_files = subset_rgb
+        dataset.depth_files = subset_depth
 
         # split into training validation and test sets
-        train_dataset, val_dataset, test_dataset = split_dataset(subset_dataset, 0.7, 0.2, 0.1)
+        train_dataset, val_dataset, test_dataset = split_dataset(dataset, 0.7, 0.2, 0.1)
         train_loader = DataLoader(train_dataset, batch_size=8, shuffle=True)
         val_loader = DataLoader(val_dataset, batch_size=8, shuffle=False)
         test_loader = DataLoader(test_dataset, batch_size=1, shuffle=False)
 
         # train
         print("\nTrain Dataset...")
-        model, device, train_losses, val_losses = train_model(train_loader, val_loader,model = DepthNet(), num_epochs=5, name=f"{num_imgs}imgs")
+        model, device, train_losses, val_losses = train_model(train_loader, val_loader, results_folder, model = DepthNet(), num_epochs=5, name=f"{num_imgs}imgs")
         all_losses[num_imgs] = (train_losses, val_losses)
         
         # test
         print("\nTest Dataset...")
-        test_model(model, test_loader, device, num_samples=3, name = f"{num_imgs}imgs")
+        test_model(model, test_loader, device, results_folder, num_samples=3, name = f"{num_imgs}imgs")
+
                    
     # Plot Losses
     print("\nPlotting Loss Plot...")
@@ -95,7 +112,7 @@ def main_DepthNet():
     plt.legend()
     plt.grid(True)
     plt.title("Training & Validation Loss Plot")
-    plt.savefig("Train_Val_Loss_Plot.png")
+    plt.savefig(os.path.join(results_folder, "Train_Val_Loss_Plot.png"))
 
     print("\n----- END -----")
 
@@ -107,7 +124,7 @@ def main_DepthNetWithPrior():
     full_dataset = CanyonDatasetWithPrior(rgb_folder=tiny_canyon_seaErra_path, depth_folder=tiny_canyon_depth_path)
 
     # for faster training/testing
-    num_imgs_list = [1000]
+    num_imgs_list = [20]
 
     all_losses = {}
 
@@ -131,12 +148,12 @@ def main_DepthNetWithPrior():
 
         # train
         print("\nTrain Dataset...")
-        model, device, train_losses, val_losses = train_model(train_loader, val_loader,model=DepthNetWithPrior(), num_epochs=5, name=f"{num_imgs}imgs")
+        model, device, train_losses, val_losses = train_model(train_loader, val_loader, results_folder, model=DepthNetWithPrior(), num_epochs=5, name=f"{num_imgs}imgs_WithPrior")
         all_losses[num_imgs] = (train_losses, val_losses)
         
         # test
         print("\nTest Dataset...")
-        test_model(model, test_loader, device, num_samples=3, name = f"{num_imgs}imgs_prior")
+        test_model(model, test_loader, device, results_folder, num_samples=3, name = f"{num_imgs}imgs_prior")
                    
     # Plot Losses
     print("\nPlotting Loss Plot...")
@@ -150,8 +167,8 @@ def main_DepthNetWithPrior():
     plt.ylabel("Loss")
     plt.legend()
     plt.grid(True)
-    plt.title("Training & Validation Loss Plot")
-    plt.savefig("Train_Val_Loss_Plot.png")
+    plt.title("Training & Validation Loss Plot (WithPrior)")
+    plt.savefig(os.path.join(results_folder, "Train_Val_Loss_Plot_WithPrior.png"))
 
     print("\n----- END (WithPrior) -----")
 

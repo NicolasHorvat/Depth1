@@ -1,9 +1,10 @@
+import os
 import torch
 from torch.utils.data import DataLoader
 import matplotlib.pyplot as plt
 import torch.nn as nn
 
-def test_model(model, test_loader, device, num_samples=5, name = ''):
+def test_model(model, test_loader, device, results_folder, num_samples=5, name = ''):
     """
     Test the model and plot examples
     """
@@ -47,7 +48,7 @@ def test_model(model, test_loader, device, num_samples=5, name = ''):
             fig.colorbar(im3, ax=ax[3], fraction=0.046, pad=0.04)
 
             plt.tight_layout()
-            plt.savefig(f"test_{name}_{i}.png")
+            plt.savefig(os.path.join(results_folder, f"test_{name}_{i}.png"))
             plt.close(fig)
 
             if i+1 >= num_samples:

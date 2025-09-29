@@ -1,3 +1,4 @@
+import os
 import torch
 import torch.optim as optim
 import torch.nn as nn
@@ -24,11 +25,13 @@ class LogLoss(nn.Module):
         return loss
 
 
-def train_model(train_loader, val_loader, model, num_epochs, name=None):
+def train_model(train_loader, val_loader, results_folder, model, num_epochs, name=None):
     '''
     Trains the model.
     Works for DepthNet and DepthNetWithPrior.
     '''
+
+    # hyper parametes
     lr=5e-3
     step_size=1
     gamma=0.9
@@ -96,7 +99,7 @@ def train_model(train_loader, val_loader, model, num_epochs, name=None):
 
     # Save model
     if name is not None:
-        model_path = f"depth_model_{name}.pth"
+        model_path = os.path.join(results_folder, f"depth_model_{name}.pth")
         torch.save(model.state_dict(), model_path)
         print(f"Model saved as {model_path}")
 
