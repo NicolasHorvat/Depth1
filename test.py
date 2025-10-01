@@ -21,6 +21,7 @@ def test_model(model, test_loader, device, results_folder, num_samples=5, name='
 
             # Select first item in batch
             rgb_np = rgb[0].permute(1,2,0).cpu().numpy()
+            rgb_np = rgb_np[:, :, :3]
             depth_np = depth[0].squeeze().cpu().numpy()
             pred_np = pred[0].squeeze().cpu().numpy()
 

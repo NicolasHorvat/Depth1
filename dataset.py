@@ -1,9 +1,12 @@
 import os
 import torch
-from torch.utils.data import Dataset, Subset
+from torch.utils.data import Dataset, Subset, DataLoader, ConcatDataset
+from torch.utils.data import random_split
 import tifffile
 
+
 class CanyonDataset(Dataset):
+
     def __init__(self, rgb_folder, depth_folder):
         self.rgb_folder = rgb_folder
         self.depth_folder = depth_folder
@@ -20,10 +23,11 @@ class CanyonDataset(Dataset):
         rgb = tifffile.imread(rgb_path) / 255.0
         depth = tifffile.imread(depth_path).astype('float32')
 
-        rgb_tensor = torch.tensor(rgb).permute(2,0,1).float()  # [C,H,W]
-        depth_tensor = torch.tensor(depth).unsqueeze(0)         # [1,H,W]
+        rgb_tensor = torch.tensor(rgb).permute(2,0,1).float()   # [H, W, C] -> [C,H,W]
+        depth_tensor = torch.tensor(depth).unsqueeze(0)         # [H, W]    -> [1,H,W]
 
         return rgb_tensor, depth_tensor
+    
     
 class CanyonDatasetWithPrior(CanyonDataset):
     def __getitem__(self, idx):
@@ -63,3 +67,47 @@ def split_dataset(dataset, train_frac=0.7, val_frac=0.2, test_frac=0.1):
     test_subset = Subset(dataset, test_indices)
 
     return train_subset, val_subset, test_subset
+
+
+
+
+def combine_canyons(paths, dataset_class = CanyonDataset, n = 100, split=(0.7, 0.2, 0.1), seed=None):
+    """
+    Load multiple CanyonDatasets, sample n images from each, split into train/val/test, and combine.
+    
+    Args:
+        paths (rgb_folder, depth_folder)
+        n (int): Number of images to sample from each canyon
+        split_fractions (tuple): Fractions for train, val, test split (must sum to 1.0)
+    
+    Returns:
+        train_combined, val_combined, test_combined
+    """
+
+    train_sets = []
+    val_sets = []
+    test_sets = []
+
+    for rgb_folder, depth_folder in paths:
+
+        dataset = dataset_class(rgb_folder, depth_folder)
+
+        # sample
+        n = min(n, len(dataset))
+        indices = torch.randperm(len(dataset))[:n].tolist()
+        subset = Subset(dataset, indices)
+
+        # Split
+        train_subset, val_subset, test_subset = split_dataset(subset, *split)
+
+        # append
+        train_sets.append(train_subset)
+        val_sets.append(val_subset)
+        test_sets.append(test_subset)
+
+    # Combine
+    train_combined = ConcatDataset(train_sets)
+    val_combined = ConcatDataset(val_sets)
+    test_combined = ConcatDataset(test_sets)
+
+    return train_combined, val_combined, test_combined

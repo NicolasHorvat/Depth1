@@ -121,6 +121,6 @@ def train_model(train_loader, val_loader, results_folder, model, num_epochs, nam
     if name is not None:
         model_path = os.path.join(results_folder, f"depth_model_{name}.pth")
         torch.save(model.state_dict(), model_path)
-        print(f"Model saved as {model_path}")
+        print(f"\n-> Model saved at {model_path}")
 
     return model, device, train_losses, val_losses
