@@ -4,14 +4,27 @@
 # --------------------------------------------------------------------------------- #
 # --------------------------------------------------------------------------------- #
 
+'''
+TODO: 
+            Pretrained model
+            Sift features as Prior
+            K-fold Crossvalidation
+            Saveing Best Model -> whene val loss starts to increase
+            R
+
+'''
+
+
 import sys
 import os
 
 # reminder to start the virtual environment
-if not sys.prefix.endswith('Depth1_venv1'):
-    print("Warning: Not running inside 'Depth1_venv1' virtual environment")
+if not (sys.prefix.endswith('Depth1_venv') or sys.prefix.endswith('Depth1_venv1') or sys.prefix.endswith('venv')):
+    print("Warning: Not running inside the virtual environment")
 
 # Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process
+# .\venv\Scripts\Activate
+# .\Depth1_venv\Scripts\Activate
 # .\Depth1_venv1\Scripts\Activate
 # venv (.\Depth1_venv1\Scripts\python.exe .\main.py)
 
@@ -21,11 +34,11 @@ from dataset import CanyonDataset, CanyonDatasetWithPrior
 from dataset import split_dataset, combine_canyons
 from train import train_model
 from test import test_model
-from model import DepthNet, DepthNetWithPrior
-from utils import LossPlot, print_title
+from model import UNet_3channels, UNet_4channels
+from utils import LossPlot, print_title, create_results_folder, save_model_at, test_saved_model, print_thingy
 
 import matplotlib.pyplot as plt
-from datetime import datetime
+from functools import partial
 
 
 # --------------------------------------------------------------------------------- #
@@ -36,7 +49,7 @@ from datetime import datetime
 print("\n(Reminder to change the canyons folder path)")
 
 # canyons_path = r"C:\Users\nicol\ETH\Master_Thesis\canyons" # path to canyons data from FLSea VI
-canyons_path = r"D:\canyons" # path to canyons data from FLSea VI on my SSD
+canyons_path = r"H:\canyons" # path to canyons data from FLSea VI on my SSD                                    <-------  Dataset Path !!!
 
 # paths to the different folders in canyon
 flatiron_path = os.path.join(canyons_path, "flatiron")
@@ -77,193 +90,130 @@ canyon_seaErra_depth_paths = [
 
 
 # --------------------------------------------------------------------------------- #
-#                               Results Folder
+#                              Main Function
 # --------------------------------------------------------------------------------- #
 
-# TODO: Could be done better (works for now)
-
-# create a folder to save plots for organization
-run_name = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-results_folder = os.path.join("results", run_name)
-os.makedirs(results_folder, exist_ok=True)
-print(f"\nSaving results to: {results_folder}")
-
-
-
-# --------------------------------------------------------------------------------- #
-#                                 Functions
-# --------------------------------------------------------------------------------- #
-
-def test_saved_model(model_class, model_path, dataset_class, rgb_folder, depth_folder, results_folder, num_samples=5, name="saved"):
+def train_test_model(dataset_paths = canyon_seaErra_depth_paths,
+                     model_class = UNet_3channels,
+                     model_name = None,
+                     n_samples_of_each_canyon = [10],
+                     num_epochs = 2,
+                     batch_size = 4,
+                     split = (0.7,0.2,0.1),
+                     dataset_class = CanyonDataset,
+                     test_num_samples = 10):
     """
-    Load a trained model and test it. (Plots some Plots)
-    Runs test.py for a selected model
+    Train and test a model.
+
+    Args:
+        model_class: DepthNet or DepthNetWithPrior or a different compatible one
+        model_name: for naming stuff (if none, a name is automaticaly given based on the arguments)
+        dataset_class: CanyonDataset or CanyonDatasetWithPrior
+        test_num_samples: number of samples to visualize in test
     """
 
-    # Select device
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    print(f"Using device: {device}")
-
-    # Init model
-    model = model_class().to(device)
-    model.load_state_dict(torch.load(model_path, map_location=device))
-    print(f"Loaded model weights from {model_path}")
-
-    # test dataset
-    dataset = dataset_class(rgb_folder=rgb_folder, depth_folder=depth_folder)
-    dataset.rgb_files = sorted(dataset.rgb_files)
-    dataset.depth_files = sorted(dataset.depth_files)
-
-    _, _, test_dataset = split_dataset(dataset, 0.7, 0.2, 0.1)
-    test_loader = DataLoader(test_dataset, batch_size=1, shuffle=False)
-
-    # Run test
-    print("\nTesting loaded model...")
-    test_model(model, test_loader, device, results_folder, num_samples=num_samples, name=name)
+    # model name
+    if model_name is None:
+        model_name = f"{model_class.__name__}_{n_samples_of_each_canyon}imgsPerCanyon_{num_epochs}epochs_bs{batch_size}"
 
 
-
-def main_DepthNet():
-    '''
-    Main function for training without any prior knowlage.
-    Load Data, train, test
-    '''
-
-    print_title("START (without Prior)")
-
-    # for faster training/testing etc
-    n_samples_of_eache_canyon = [10] # Array to train on diffenent sizes of the dataset
-
+    print_title(f"START (model name: {model_name})")
     all_losses = {}
 
-    for n in n_samples_of_eache_canyon:
-        print(f"\n(Using {n} samples of each canyon dataset (FLSea))")
 
-        # Split fractions (train,val,test)
-        split = (0.7, 0.2, 0.1) 
+    for n in n_samples_of_each_canyon:
+        print(f"\n(Using {n} samples per canyon dataset)")
 
-        # Combine and split
+        # Load and split dataset
         train_dataset, val_dataset, test_dataset = combine_canyons(
-            paths = canyon_seaErra_depth_paths,
-            dataset_class = CanyonDataset,
+            paths = dataset_paths,
+            dataset_class = dataset_class,
             n = n,
             split = split
         )
 
-        # DataLoaders
-        train_loader = DataLoader(train_dataset, batch_size=8, shuffle=True)
-        val_loader   = DataLoader(val_dataset, batch_size=8, shuffle=True)
+        train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+        val_loader   = DataLoader(val_dataset, batch_size=batch_size, shuffle=True)
         test_loader  = DataLoader(test_dataset, batch_size=1, shuffle=False)
 
-        # train
-        print("\nTrain Dataset...")
+        # Results folder
+        results_folder_path = create_results_folder(model_name = model_name)
+
+        # Train
+        model = model_class()
         model, device, train_losses, val_losses = train_model(
-            train_loader, val_loader, results_folder,
-            model = DepthNet(),
-            num_epochs=2,
-            name=f"{n}imgs_each"
+            train_loader,
+            val_loader,
+            model=model,
+            num_epochs=num_epochs,
+            results_folder_path = results_folder_path,
+            model_name=model_name
             )
-        
         all_losses[n] = (train_losses, val_losses)
-        
-        # test
+
+        # Test
         print("\n\nTest Dataset...")
         test_model(
-            model, test_loader, device, results_folder,
-            num_samples=10,
-            name = f"{n}imgs each"
-            )
-
-                   
-    # Plot Losses
-    LossPlot(all_losses, results_folder,
-             "Training & Validation Loss Plot (WithoutPrior)", # title
-             "Train_Val_Loss_Plot.png"  # file name
-             )
-        
-
-    print_title("Finished! (without Prior)")
-
-def main_DepthNetWithPrior():
-
-    print_title("START (with Prior)")
-
-    print("\nLoading Data & Splitting Dataset...")
-    # for faster training/testing etc
-    n_samples_of_eache_canyon = [10] # Array to train on diffenent sizes of the dataset
-
-    all_losses = {}
-
-    for n in n_samples_of_eache_canyon:
-        print(f"\n(Using {n} samples of each canyon)")
-
-        # Split fractions (train,val,test)
-        split = (0.7, 0.2, 0.1) 
-
-        # Combine and split
-        train_dataset, val_dataset, test_dataset = combine_canyons(
-            paths = canyon_seaErra_depth_paths,
-            dataset_class = CanyonDatasetWithPrior,
-            n = n,
-            split = split
+            model, test_loader, device, results_folder_path,
+            num_samples=test_num_samples,
+            name=f"{n}imgs each"
         )
 
-        # DataLoaders
-        train_loader = DataLoader(train_dataset, batch_size=8, shuffle=True)
-        val_loader   = DataLoader(val_dataset, batch_size=8, shuffle=True)
-        test_loader  = DataLoader(test_dataset, batch_size=1, shuffle=False)
-
-        # train
-        print("\nTrain Dataset...")
-        model, device, train_losses, val_losses = train_model(
-            train_loader, val_loader, results_folder,
-            model = DepthNetWithPrior(),
-            num_epochs=2,
-            name=f"{n}imgs_each"
-            )
-        
-        all_losses[n] = (train_losses, val_losses)
-        
-        # test
-        print("\nTest Dataset...")
-        test_model(
-            model, test_loader, device, results_folder,
-            num_samples=10,
-            name = f"{n}imgs each"
-            )
-
-                   
     # Plot Losses
-    LossPlot(all_losses, results_folder,
-             "Training & Validation Loss Plot (WithoutPrior)", # title
-             "Train_Val_Loss_Plot.png"  # file name
-             )
-        
-    print_title("Finished (with Prior)")
+    LossPlot(
+        all_losses, results_folder_path,
+        f"Training & Validation Loss Plot ({model_name})",
+        "Train_Val_Loss_Plot.png"
+    )
+
+    print_title(f"Finished ({model_name})")
+
 
 if __name__ == "__main__":
 
     # select what you want to run
 
-    if True:
+    if False:
         main_DepthNet()
 
-    if True:
-        main_DepthNetWithPrior()
-
     if False:
-        test_saved_model(
-        model_class=DepthNet,
-        model_path=os.path.join("results", "2025-09-29_17-00-51", "depth_model_100imgs.pth"),
-        dataset_class=CanyonDataset,
-        rgb_folder=tiny_canyon_seaErra_path,
-        depth_folder=tiny_canyon_depth_path,
-        results_folder=os.path.join("results", "2025-09-29_17-00-51"),
-        num_samples=5,
-        name="DepthNet_test"
-    )
+        train_test_model(
+            model_class=DepthNet,
+            model_name="Testing",
+            )
+        
+    if False:
+        train_test_model(
+            dataset_paths = canyon_seaErra_depth_paths,
+            model_class = UNet_3channels,
+            model_name = None,
+            n_samples_of_each_canyon = [100],
+            num_epochs = 4,
+            batch_size = 4,
+            split = (0.7,0.2,0.1),
+            dataset_class = CanyonDataset,
+            test_num_samples = 10
+            )
+        
+    if True:
+        train_test_model(
+            dataset_paths = canyon_seaErra_depth_paths,
+            model_class = UNet_4channels,
+            model_name = None,
+            n_samples_of_each_canyon = [10],
+            num_epochs = 4,
+            batch_size = 4,
+            split = (0.7,0.2,0.1),
+            dataset_class = CanyonDatasetWithPrior,
+            test_num_samples = 10
+            )
+
+    
     
 
     # for testing stuff
     if False:
         print_title("I should be centered")
+
+
+    print_thingy()

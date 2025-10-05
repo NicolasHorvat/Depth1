@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import torch.nn as nn
 import numpy as np
 
-def test_model(model, test_loader, device, results_folder, num_samples=5, name=''):
+def test_model(model, test_loader, device, results_folder, num_samples = 5, name = 'noName'):
     """
     Test the model and plot some plots
     """
@@ -40,39 +40,42 @@ def test_model(model, test_loader, device, results_folder, num_samples=5, name='
 
 
             # Plotting
-            fig, ax = plt.subplots(3, 2, figsize=(12, 16))
+            fig, ax = plt.subplots(2, 3, figsize=(20, 12), facecolor='lightgray')
 
-            # Row 1
-            im1 = ax[0,0].imshow(depth_np, cmap="viridis", vmin=depth_vmin, vmax=depth_vmax)
-            ax[0,0].set_title("Ground Truth Depth [m]")
+            title_fontsize = 22
+
+            # Row 1 (unmasked)
+            ax[0,0].imshow(rgb_np)
+            ax[0,0].set_title("RGB Image", fontsize = title_fontsize)
             ax[0,0].axis('off')
-            fig.colorbar(im1, ax=ax[0,0], fraction=0.046, pad=0.04)
 
-            ax[0,1].imshow(rgb_np)
-            ax[0,1].set_title("RGB Image")
+            im4 = ax[0,1].imshow(pred_np, cmap="viridis", vmin=depth_vmin, vmax=depth_vmax)
+            ax[0,1].set_title("Predicted Depth [m]", fontsize = title_fontsize)
             ax[0,1].axis('off')
+            fig.colorbar(im4, ax=ax[0,1], fraction=0.046, pad=0.04)
+
+            im5 = ax[0,2].imshow(error_np, cmap="viridis", vmin=error_vmin, vmax=error_vmax)
+            ax[0,2].set_title("Absolute Error [m]", fontsize = title_fontsize)
+            ax[0,2].axis('off')
+            fig.colorbar(im5, ax=ax[0,2], fraction=0.046, pad=0.04)
 
             # Row 2 (masked)
-            im2 = ax[1,0].imshow(pred_masked, cmap="viridis", vmin=depth_vmin, vmax=depth_vmax)
-            ax[1,0].set_title("Predicted Depth (Masked)")
+            im1 = ax[1,0].imshow(depth_np, cmap="viridis", vmin=depth_vmin, vmax=depth_vmax)
+            ax[1,0].set_title("Ground Truth Depth [m]", fontsize = title_fontsize)
             ax[1,0].axis('off')
-            fig.colorbar(im2, ax=ax[1,0], fraction=0.046, pad=0.04)
+            fig.colorbar(im1, ax=ax[1,0], fraction=0.046, pad=0.04)
 
-            im3 = ax[1,1].imshow(error_masked, cmap="viridis", vmin=error_vmin, vmax=error_vmax)
-            ax[1,1].set_title("Absolute Error (Masked)")
+            im2 = ax[1,1].imshow(pred_masked, cmap="viridis", vmin=depth_vmin, vmax=depth_vmax)
+            ax[1,1].set_title("Predicted Depth (Masked)", fontsize = title_fontsize)
             ax[1,1].axis('off')
-            fig.colorbar(im3, ax=ax[1,1], fraction=0.046, pad=0.04)
+            fig.colorbar(im2, ax=ax[1,1], fraction=0.046, pad=0.04)
 
-            # Row 3 (unmasked)
-            im4 = ax[2,0].imshow(pred_np, cmap="viridis", vmin=depth_vmin, vmax=depth_vmax)
-            ax[2,0].set_title("Predicted Depth [m]")
-            ax[2,0].axis('off')
-            fig.colorbar(im4, ax=ax[2,0], fraction=0.046, pad=0.04)
+            im3 = ax[1,2].imshow(error_masked, cmap="viridis", vmin=error_vmin, vmax=error_vmax)
+            ax[1,2].set_title("Absolute Error (Masked)", fontsize = title_fontsize)
+            ax[1,2].axis('off')
+            fig.colorbar(im3, ax=ax[1,2], fraction=0.046, pad=0.04)
 
-            im5 = ax[2,1].imshow(error_np, cmap="viridis", vmin=error_vmin, vmax=error_vmax)
-            ax[2,1].set_title("Absolute Error [m]")
-            ax[2,1].axis('off')
-            fig.colorbar(im5, ax=ax[2,1], fraction=0.046, pad=0.04)
+            
 
             plt.tight_layout()
             plt.savefig(os.path.join(results_folder, f"test_grid_{name}_{i}.png"))

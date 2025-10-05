@@ -1,12 +1,11 @@
-import os
 import torch
 import torch.optim as optim
 import torch.nn as nn
 from tqdm import tqdm
-import matplotlib
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
-from model import DepthNet, DepthNetWithPrior
+import time
+from datetime import datetime
+
+from utils import save_model_at
 
 class LogLoss(nn.Module):
     def __init__(self, eps=1e-6):
@@ -25,13 +24,27 @@ class LogLoss(nn.Module):
         return (log_diff ** 2).mean()
 
 
-def train_model(train_loader, val_loader, results_folder, model, num_epochs, name=None):
+def train_model(train_loader, val_loader, model, num_epochs, results_folder_path, model_name):
     """
     Trains the model.
     Works for DepthNet and DepthNetWithPrior.
-    Handles invalid depth pixels by masking.
+    Handles invalid depth pixels (0 or NaN in the ground truth depth) by masking.
+
+    Args:
+            train_loader, val_loader:   Dataloaders
+            model:                      Model to be trained
+            num_epochs:                 number of epochs to be trained
+            model_name:                 for naming folders and such
+    Returns:
+            model:          trained model
+            device:         cpu or gpu/cuda
+            train_losses:   training losses
+            val_losses:     validation losses
+            
     """
 
+    start_time = time.time()
+    
     # Hyperparameters
     lr = 1e-3
     step_size = 1
@@ -40,10 +53,8 @@ def train_model(train_loader, val_loader, results_folder, model, num_epochs, nam
 
     # Select Device
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    print(f"Using device: {device}")
 
-
-    # optimiser
+    # optimizer
     model = model.to(device)
     optimizer = optim.Adam(model.parameters(), lr)
     scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=step_size, gamma=gamma)
@@ -51,12 +62,28 @@ def train_model(train_loader, val_loader, results_folder, model, num_epochs, nam
     criterion_mse = nn.MSELoss(reduction='none')  # elementwise
     criterion_log = LogLoss()
 
+    # Print Statements
+    print("\n")
+    print("\\"*50)
+    print("Starting training!")
+    print(f"Model: {type(model).__name__}")
+    print(f"Device: {device}")
+    print(f"Number of epochs: {num_epochs}")
+    print(f"Learning rate: {lr}, Step size: {step_size}, Gamma: {gamma}")
+    print(f"Time: {datetime.now().strftime('%H:%M')}")
+    print("\\"*50)
+
+
+    # Losses
     train_losses = []
     val_losses = []
+    best_val_loss = float('inf')
+    best_epoch = -1
 
 
-    for epoch in range(num_epochs):
-
+    for epoch in range(num_epochs): 
+        
+        epoch_start = time.time()
         print(f"\nEpoch {epoch+1}/{num_epochs} - Training...")
 
         model.train()
@@ -90,8 +117,10 @@ def train_model(train_loader, val_loader, results_folder, model, num_epochs, nam
 
 
         print(f"Epoch {epoch+1}/{num_epochs} - Validation...")
+
         model.eval()
-        val_loss = 0.0
+        running_loss = 0.0
+
         with torch.no_grad():
             for batch in tqdm(val_loader, desc="Validation batches"):
                 rgb, depth = batch
@@ -104,23 +133,34 @@ def train_model(train_loader, val_loader, results_folder, model, num_epochs, nam
                 # Compute losses
                 mse_map = criterion_mse(pred, depth)
                 mse_loss = mse_map[valid_mask].mean()
-
                 log_loss = criterion_log(pred, depth, mask=valid_mask)
-
                 loss = 0.7 * mse_loss + 0.3 * log_loss
-                val_loss += loss.item() * depth.size(0)
 
-        epoch_val_loss = val_loss / len(val_loader.dataset)
+                running_loss += loss.item() * depth.size(0)
+
+        epoch_val_loss = running_loss / len(val_loader.dataset)
         val_losses.append(epoch_val_loss)
 
         scheduler.step()
+
+        # Save best model
+        if epoch_val_loss < best_val_loss:
+            best_val_loss = epoch_val_loss
+            best_epoch = epoch
+            # Save model
+            save_model_at(model, results_folder_path, model_name = model_name)
+
+        # Print some Information
         print(f"Epoch {epoch+1} - Train Loss: {epoch_train_loss:.6f}, Val Loss: {epoch_val_loss:.6f}")
+        epoch_end = time.time()
+        epoch_duration = epoch_end - epoch_start
+        elapsed_time = epoch_end - start_time
+        remaining_time = epoch_duration * (num_epochs - epoch - 1)
+        print(f"Epoch {epoch+1} finished in {epoch_duration:.1f}s")
+        print(f"Elapsed time: {elapsed_time/60:.1f} min, Estimated remaining time: {remaining_time/60:.1f} min")
 
     
-    # Save model
-    if name is not None:
-        model_path = os.path.join(results_folder, f"depth_model_{name}.pth")
-        torch.save(model.state_dict(), model_path)
-        print(f"\n-> Model saved at {model_path}")
+    print("Finished Training")
+    print(f"Best model saved from epoch {best_epoch+1} with Val Loss: {best_val_loss:.6f}")
 
     return model, device, train_losses, val_losses
