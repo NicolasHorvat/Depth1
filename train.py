@@ -1,6 +1,5 @@
 import torch
 import torch.optim as optim
-import torch.nn as nn
 from tqdm import tqdm
 import time
 from datetime import datetime
@@ -134,9 +133,9 @@ def train_model(train_loader, val_loader, model, num_epochs, results_folder_path
         epoch_duration = epoch_end - epoch_start
         elapsed_time = epoch_end - start_time
         remaining_time = epoch_duration * (num_epochs - epoch - 1)
-        print(f" -> Epoch {epoch+1} - Train Loss: {epoch_train_loss:.4f}, Val Loss: {epoch_val_loss:.4f},"
-              f"Epoch {epoch+1} finished in {epoch_duration:.2f}s,"
-              f"Elapsed time: {elapsed_time/60:.2f} min, Estimated remaining time: {remaining_time/60:.2f} min")
+        print(f"--> Epoch {epoch+1} - (Train Loss: {epoch_train_loss:.4f}), (Val Loss: {epoch_val_loss:.4f}), "
+              f"Epoch {epoch+1} finished in {epoch_duration:.2f}s, "
+              f"(Elapsed time: {elapsed_time/60:.2f} min), (Estimated remaining time: {remaining_time/60:.2f} min)")
 
     
     if best_model_state is not None:
@@ -147,9 +146,9 @@ def train_model(train_loader, val_loader, model, num_epochs, results_folder_path
 
     print("\n")
     print("\\"*50)
-    print("Training Finished!")
-    print(f"Best model saved from epoch {best_epoch+1} with Val Loss: {best_val_loss:.6f}")
-    print(f"Training time: {train_time/60:.1f} min ({train_time/3600:.1f} h)")
+    print(f"- Training Finished!")
+    print(f"- Best model saved from epoch {best_epoch+1} with Val Loss: {best_val_loss:.6f}")
+    print(f"- Training time: {train_time/60:.1f} min ({train_time/3600:.1f} h)")
     print("\\"*50)
 
     return model, device, train_losses, val_losses, train_time

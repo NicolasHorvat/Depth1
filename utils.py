@@ -5,6 +5,7 @@ import csv
 
 import torch
 from torch.utils.data import DataLoader
+import torch.nn as nn
 
 from dataset import split_dataset
 
@@ -12,21 +13,17 @@ from dataset import split_dataset
 #                            Some Utility Functions
 # --------------------------------------------------------------------------------- #
 
-def LossPlot(all_losses, results_folder, title, filename):
-    colors = ['b', 'g', 'r', 'k', 'c', 'm']
+def LossPlot(train_losses, val_losses, results_folder, model_name):
     plt.figure(figsize=(8,6))
-    for i, (num_imgs, (train_losses, val_losses)) in enumerate(all_losses.items()):
-        color = colors[i % len(colors)]
-        plt.plot(train_losses, label=f"Train {num_imgs} imgs", linewidth=2, color=color)
-        plt.plot(val_losses, '--', label=f"Val {num_imgs} imgs", linewidth=2, color=color)
+    plt.plot(train_losses, label="Train", linewidth=2, color='b')
+    plt.plot(val_losses, '--', label="Val", linewidth=2, color='r')
     plt.xlabel("Epoch")
     plt.ylabel("Loss")
     plt.legend()
     plt.grid(True)
-    plt.title(title)
-    plt.savefig(os.path.join(results_folder, filename))
+    plt.title(f"Training & Validation Loss Plot ({model_name})")
+    plt.savefig(os.path.join(results_folder, f"Train_Val_Loss_Plot_({model_name}).png"))
     plt.close()
-
 
 
 def create_results_folder(model_name = "noName"):

@@ -94,7 +94,7 @@ canyon_seaErra_depth_paths = [
 def train_test_model(dataset_paths = canyon_seaErra_depth_paths,
                      model_class = UNet_3channels,
                      model_name = None,
-                     n_samples_of_each_canyon = [10],
+                     n_list = [40],
                      num_epochs = 2,
                      batch_size = 4,
                      split = (0.7,0.2,0.1),
@@ -114,22 +114,24 @@ def train_test_model(dataset_paths = canyon_seaErra_depth_paths,
     if model_name is not None:
         model_named = True
 
-    for n in n_samples_of_each_canyon:
+    num_canyons = len(dataset_paths)
+
+    for n in n_list:
 
         # model name
         if model_named is False:
-            model_name = f"{model_class.__name__}_{dataset_class.__name__}_{n}imgsPerCanyon"
+            model_name = f"{model_class.__name__}_{dataset_class.__name__}_{n}imgs"
 
 
         print_title(f"START (model name: {model_name})")
-        print(f"\n(Using {n} samples per canyon dataset)")
-        all_losses = {}
+        n_per_canyon = n // num_canyons
+        print(f"\nUsing total {n} images -> {n_per_canyon} per canyon")
 
         # Load and split dataset
         train_dataset, val_dataset, test_dataset = combine_canyons(
             paths = dataset_paths,
             dataset_class = dataset_class,
-            n = n,
+            n = n_per_canyon,
             split = split
         )
 
@@ -150,7 +152,6 @@ def train_test_model(dataset_paths = canyon_seaErra_depth_paths,
             results_folder_path = results_folder_path,
             model_name = model_name
             )
-        all_losses[n] = (train_losses, val_losses)
 
         # Test
         test_loss = test_model(
@@ -160,11 +161,7 @@ def train_test_model(dataset_paths = canyon_seaErra_depth_paths,
         )
 
         # Plot Losses
-        LossPlot(
-            all_losses, results_folder_path,
-            f"Training & Validation Loss Plot ({model_name})",
-            "Train_Val_Loss_Plot.png"
-        )
+        LossPlot(train_losses, val_losses, results_folder_path, model_name)
 
         # log
         log(model_name, train_time, test_loss)
@@ -226,27 +223,34 @@ if __name__ == "__main__":
         UNet_4inChs_2L_24bf,
         UNet_4inChs_3L_24bf
         ]
+    model_class_list_4inChs_test = [
+        UNet_4inChs_1L_12bc,
+        UNet_4inChs_1L_24bf,
+        UNet_4inChs_2L_12bc,
+        UNet_4inChs_2L_24bf
+        ]
 
     if True:
         for model_class in model_class_list_3inChs:
             count_parameters(model_class())
+        print("\n")
         for model_class in model_class_list_4inChs:
             count_parameters(model_class())
 
     # ---------- Flexible U-Net TEST -----------------
-    if False:
+    if True:
 
-        for model_class in model_class_list_4inChs:
+        for model_class in model_class_list_4inChs_test:
             train_test_model(
                 dataset_paths = canyon_seaErra_depth_paths,
                 model_class = model_class,
                 model_name = None,
-                n_samples_of_each_canyon = [10,100],
-                num_epochs = 10,
+                n_list = [40],
+                num_epochs = 3,
                 batch_size = 4,
                 split = (0.7,0.2,0.1),
                 dataset_class = CanyonDatasetWithPrior1,
-                test_num_samples = 10
+                test_num_samples = 5
                 )
 
 
@@ -256,7 +260,7 @@ if __name__ == "__main__":
             dataset_paths = canyon_seaErra_depth_paths,
             model_class = UNet_3channels,
             model_name = None,
-            n_samples_of_each_canyon = [10],
+            n_list = [10],
             num_epochs = 4,
             batch_size = 4,
             split = (0.7,0.2,0.1),
@@ -270,7 +274,7 @@ if __name__ == "__main__":
             dataset_paths = canyon_seaErra_depth_paths,
             model_class = UNet_4channels,
             model_name = None,
-            n_samples_of_each_canyon = [10],
+            n_list = [10],
             num_epochs = 4,
             batch_size = 4,
             split = (0.7,0.2,0.1),
@@ -284,7 +288,7 @@ if __name__ == "__main__":
             dataset_paths = canyon_seaErra_depth_paths,
             model_class = UNet_4channels_256,
             model_name = None,
-            n_samples_of_each_canyon = [5, 10, 100, 500, 1000],
+            n_list = [5, 10, 100, 500, 1000],
             num_epochs = 10,
             batch_size = 4,
             split = (0.7,0.2,0.1),
@@ -298,7 +302,7 @@ if __name__ == "__main__":
             dataset_paths = canyon_seaErra_depth_paths,
             model_class = ResNetUNet,
             model_name = None,
-            n_samples_of_each_canyon = [10],
+            n_list = [10],
             num_epochs = 4,
             batch_size = 4,
             split = (0.7,0.2,0.1),
