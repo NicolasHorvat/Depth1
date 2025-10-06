@@ -1,0 +1,14 @@
+[2025-10-05 21:35:54] Model: UNet_3channels_[5]imgsPerCanyon_4epochs_bs4 | Training Time: 249.80s | Final MSE: 3.477662
+[2025-10-05 21:47:19] Model: UNet_4channels_[5]imgsPerCanyon_4epochs_bs4 | Training Time: 675.99s | Final MSE: 6.091126
+[2025-10-05 22:09:17] Model: UNet_3channels_10imgsPerCanyon_4 | Training Time: 608.61s or 10.14min or 10.14h | Test MSE: 0.938530
+[2025-10-05 22:34:24] Model: UNet_4channels_10imgsPerCanyon_4 | Training Time: 1496.77s or 24.95min or 24.95h | Test MSE: 2.351124
+[2025-10-06 12:22:45] Model: UNet_TEST_CanyonDataset_5imgsPerCanyon_2epochs | Training Time: 4.61s or 0.08min or 0.00h | Test MSE: 9.147221
+[2025-10-06 12:23:55] Model: UNet_TEST_CanyonDataset_5imgsPerCanyon_2epochs | Training Time: 4.81s or 0.08min or 0.00h | Test MSE: 11.118697
+[2025-10-06 12:32:24] Model: UNet_3inChs_2L_12bc_CanyonDataset_5imgsPerCanyon_2epochs | Training Time: 5.10s or 0.08min or 0.00h | Test MSE: 7.951860
+[2025-10-06 12:32:35] Model: UNet_3inChs_3L_12bc_CanyonDataset_5imgsPerCanyon_2epochs | Training Time: 4.79s or 0.08min or 0.00h | Test MSE: 8.959609
+[2025-10-06 12:39:29] Model: UNet_3inChs_1L_12bc_CanyonDataset_5imgsPerCanyon_2epochs | Training Time: 4.94s or 0.08min or 0.00h | Test MSE: 4.615362
+[2025-10-06 12:39:39] Model: UNet_3inChs_2L_12bc_CanyonDataset_5imgsPerCanyon_2epochs | Training Time: 4.08s or 0.07min or 0.00h | Test MSE: 6.134971
+[2025-10-06 12:39:49] Model: UNet_3inChs_3L_12bc_CanyonDataset_5imgsPerCanyon_2epochs | Training Time: 4.56s or 0.08min or 0.00h | Test MSE: 8.357063
+[2025-10-06 12:40:01] Model: UNet_3inChs_1L_24bf_CanyonDataset_5imgsPerCanyon_2epochs | Training Time: 5.89s or 0.10min or 0.00h | Test MSE: 12.093926
+[2025-10-06 12:40:13] Model: UNet_3inChs_2L_24bf_CanyonDataset_5imgsPerCanyon_2epochs | Training Time: 5.94s or 0.10min or 0.00h | Test MSE: 15.497117
+[2025-10-06 12:40:26] Model: UNet_3inChs_3L_24bf_CanyonDataset_5imgsPerCanyon_2epochs | Training Time: 6.44s or 0.11min or 0.00h | Test MSE: 9.604849

@@ -5,17 +5,20 @@ import matplotlib.pyplot as plt
 import torch.nn as nn
 import numpy as np
 
-def test_model(model, test_loader, device, results_folder, num_samples = 5, name = 'noName'):
+def test_model(model, test_loader, device, results_folder, num_samples = 5, model_name = 'noName'):
     """
     Test the model and plot some plots
     """
+
+    print("\\"*50)
+    print("\n\nTesting Dataset...")
 
     model.eval()
 
     with torch.no_grad():
         for i, batch in enumerate(test_loader):
 
-            rgb, depth = batch
+            rgb, depth = batch[:2]
             rgb, depth = rgb.to(device), depth.to(device)
             pred = model(rgb)
 
@@ -41,6 +44,14 @@ def test_model(model, test_loader, device, results_folder, num_samples = 5, name
 
             # Plotting
             fig, ax = plt.subplots(2, 3, figsize=(20, 12), facecolor='lightgray')
+
+            # Compute masked MSE for the first item in batch
+            valid_mask = (depth[0] > 0) & (~torch.isnan(depth[0]))
+            mse_map = (pred[0] - depth[0])**2
+            mse_single = mse_map[valid_mask].mean().item()
+
+            # Add MSE to the figure title
+            fig.suptitle(f"{model_name} - Test Sample {i} - Masked MSE: {mse_single:.4f}", fontsize=24)
 
             title_fontsize = 22
 
@@ -78,25 +89,29 @@ def test_model(model, test_loader, device, results_folder, num_samples = 5, name
             
 
             plt.tight_layout()
-            plt.savefig(os.path.join(results_folder, f"test_grid_{name}_{i}.png"))
+            plt.savefig(os.path.join(results_folder, f"test_grid_{model_name}_{i}.png"))
             plt.close(fig)
 
             if i+1 >= num_samples:
                 break
 
     # Compute overall MSE
-    criterion = nn.MSELoss()
     mse_total = 0.0
     count = 0
 
     with torch.no_grad():
         for batch in test_loader:
-            rgb, depth = batch
+            rgb, depth = batch[:2]
             rgb, depth = rgb.to(device), depth.to(device)
             pred = model(rgb)
 
-            mse_total += criterion(pred, depth).item()
+            valid_mask = (depth > 0) & (~torch.isnan(depth))
+            mse_map = nn.MSELoss(reduction='none')(pred, depth)
+            mse_total += mse_map[valid_mask].mean().item()
             count += 1
 
-    avg_mse = mse_total / count
-    print("Average MSE on test set:", avg_mse)
+    test_mse = mse_total / count
+    print("Average masked MSE on test set:", test_mse)
+    print("\\"*50)
+    
+    return test_mse

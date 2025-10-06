@@ -1,6 +1,7 @@
 import os
 import matplotlib.pyplot as plt
 from datetime import datetime
+import csv
 
 import torch
 from torch.utils.data import DataLoader
@@ -54,7 +55,29 @@ def save_model_at(model, folder_path, model_name = "noName"):
     print(f"Model saved at {model_path}")
 
 
+def log(model_name, train_time, test_mse):
+    """
+    Logs Training information
+    """
+    script_dir = os.path.dirname(os.path.abspath(__file__))
 
+    # CSV log
+    csv_file = os.path.join(script_dir, "training_runs_log.csv")
+    csv_exists = os.path.exists(csv_file)
+    with open(csv_file, 'a', newline='') as f:
+        writer = csv.writer(f)
+        if not csv_exists:
+            writer.writerow(["DateTime", "ModelName", "TrainingTime_sec", "FinalMSE"])
+        writer.writerow([datetime.now().strftime('%Y-%m-%d %H:%M:%S'), 
+                         model_name, 
+                         f"{train_time:.2f}", 
+                         f"{test_mse:.6f}"])
+    
+    # TXT log
+    txt_file = os.path.join(script_dir, "training_runs_log.txt")
+    with open(txt_file, 'a') as f:
+        f.write(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] "
+                f"Model: {model_name} | Training Time: {train_time:.2f}s or {train_time/60:.2f}min or {train_time/3600:.2f}h | Test MSE: {test_mse:.6f}\n")
 
 
 def test_saved_model(model_class, model_path, dataset_class, rgb_folder, depth_folder, results_folder, num_samples=5, name="saved"):
@@ -101,3 +124,41 @@ def print_thingy():
     print("          (-O-O)       ")
     print("    \\\\\\\\_o(  >0)_////  ")
     print(f"\n")
+
+
+import matplotlib.pyplot as plt
+
+def plot_rgb_depth_prior(dataset, idx=0):
+    # Get sample
+    rgb_with_prior, depth, known_points = dataset[idx]  # ensure __getitem__ returns known_points
+    
+    # RGB image
+    rgb = rgb_with_prior[:3].permute(1,2,0)  # [H,W,3]
+    
+    # Prior channel
+    prior = rgb_with_prior[3]
+    
+    fig, axes = plt.subplots(1,3, figsize=(18,6))
+    
+    # RGB
+    axes[0].imshow(rgb)
+    axes[0].set_title("RGB")
+    axes[0].axis('off')
+    for (y, x) in known_points:
+        axes[0].scatter(x, y, color='red', s=50, edgecolors='white')
+    
+    # Depth
+    axes[1].imshow(depth.squeeze(), cmap='viridis')
+    axes[1].set_title("Depth map")
+    axes[1].axis('off')
+    for (y, x) in known_points:
+        axes[1].scatter(x, y, color='red', s=50, edgecolors='white')
+    
+    # Prior
+    axes[2].imshow(prior, cmap='viridis')
+    axes[2].set_title("Prior channel")
+    axes[2].axis('off')
+    for (y, x) in known_points:
+        axes[2].scatter(x, y, color='red', s=50, edgecolors='white')
+    
+    plt.show()

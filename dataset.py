@@ -43,6 +43,33 @@ class CanyonDatasetWithPrior(CanyonDataset):
         rgb_with_prior = torch.cat([rgb, prior], dim=0)  # [4, H, W]
 
         return rgb_with_prior, depth
+    
+class CanyonDatasetWithPrior1(CanyonDataset):
+    def __getitem__(self, idx):
+        rgb, depth = super().__getitem__(idx)  # [3,H,W] and [1,H,W]
+        _, H, W = depth.shape
+
+        # Initialize prior with zeros
+        prior = torch.zeros_like(depth)
+
+        # Pick 100 random known points
+        num_points = 100
+        ys = torch.randint(0, H, (num_points,))
+        xs = torch.randint(0, W, (num_points,))
+        known_points = torch.stack([ys, xs], dim=1)
+        known_depths = depth[0, ys, xs]
+
+        # Assign each pixel the depth of the nearest known point (naive loop)
+        for y in range(H):
+            for x in range(W):
+                # Compute distances to all known points
+                dists = (ys - y)**2 + (xs - x)**2
+                nearest_idx = torch.argmin(dists)
+                prior[0, y, x] = known_depths[nearest_idx]
+
+        # Concatenate
+        rgb_with_prior = torch.cat([rgb, prior], dim=0)  # [4,H,W]
+        return rgb_with_prior, depth, known_points
 
 
 

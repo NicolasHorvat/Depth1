@@ -4,6 +4,7 @@ import torch.nn as nn
 from tqdm import tqdm
 import time
 from datetime import datetime
+import copy
 
 from utils import save_model_at
 
@@ -80,6 +81,7 @@ def train_model(train_loader, val_loader, model, num_epochs, results_folder_path
     best_val_loss = float('inf')
     best_epoch = -1
 
+    best_model_state = None
 
     for epoch in range(num_epochs): 
         
@@ -91,7 +93,7 @@ def train_model(train_loader, val_loader, model, num_epochs, results_folder_path
 
         for batch in tqdm(train_loader, desc="Training batches"):
 
-            rgb, depth = batch
+            rgb, depth = batch[:2] # only first two returns
             rgb, depth = rgb.to(device), depth.to(device)
 
             optimizer.zero_grad()
@@ -123,7 +125,7 @@ def train_model(train_loader, val_loader, model, num_epochs, results_folder_path
 
         with torch.no_grad():
             for batch in tqdm(val_loader, desc="Validation batches"):
-                rgb, depth = batch
+                rgb, depth = batch[:2]
                 rgb, depth = rgb.to(device), depth.to(device)
                 pred = model(rgb)
 
@@ -147,6 +149,7 @@ def train_model(train_loader, val_loader, model, num_epochs, results_folder_path
         if epoch_val_loss < best_val_loss:
             best_val_loss = epoch_val_loss
             best_epoch = epoch
+            best_model_state = copy.deepcopy(model.state_dict())
             # Save model
             save_model_at(model, results_folder_path, model_name = model_name)
 
@@ -160,7 +163,17 @@ def train_model(train_loader, val_loader, model, num_epochs, results_folder_path
         print(f"Elapsed time: {elapsed_time/60:.1f} min, Estimated remaining time: {remaining_time/60:.1f} min")
 
     
-    print("Finished Training")
-    print(f"Best model saved from epoch {best_epoch+1} with Val Loss: {best_val_loss:.6f}")
+    if best_model_state is not None:
+        model.load_state_dict(best_model_state)
 
-    return model, device, train_losses, val_losses
+    end_time = time.time()
+    train_time = end_time - start_time
+
+    print("\n")
+    print("\\"*50)
+    print("Training Finished!")
+    print(f"Best model saved from epoch {best_epoch+1} with Val Loss: {best_val_loss:.6f}")
+    print(f"Training time: {train_time/60:.1f} min ({train_time/3600:.1f} h)")
+    print("\\"*50)
+
+    return model, device, train_losses, val_losses, train_time

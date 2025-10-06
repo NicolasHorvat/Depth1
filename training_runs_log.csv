@@ -1,0 +1,14 @@
+2025-10-05 21:35:54,UNet_3channels_[5]imgsPerCanyon_4epochs_bs4,249.80,3.477662
+2025-10-05 21:47:19,UNet_4channels_[5]imgsPerCanyon_4epochs_bs4,675.99,6.091126
+2025-10-05 22:09:17,UNet_3channels_10imgsPerCanyon_4,608.61,0.938530
+2025-10-05 22:34:24,UNet_4channels_10imgsPerCanyon_4,1496.77,2.351124
+2025-10-06 12:22:45,UNet_TEST_CanyonDataset_5imgsPerCanyon_2epochs,4.61,9.147221
+2025-10-06 12:23:55,UNet_TEST_CanyonDataset_5imgsPerCanyon_2epochs,4.81,11.118697
+2025-10-06 12:32:24,UNet_3inChs_2L_12bc_CanyonDataset_5imgsPerCanyon_2epochs,5.10,7.951860
+2025-10-06 12:32:35,UNet_3inChs_3L_12bc_CanyonDataset_5imgsPerCanyon_2epochs,4.79,8.959609
+2025-10-06 12:39:29,UNet_3inChs_1L_12bc_CanyonDataset_5imgsPerCanyon_2epochs,4.94,4.615362
+2025-10-06 12:39:39,UNet_3inChs_2L_12bc_CanyonDataset_5imgsPerCanyon_2epochs,4.08,6.134971
+2025-10-06 12:39:49,UNet_3inChs_3L_12bc_CanyonDataset_5imgsPerCanyon_2epochs,4.56,8.357063
+2025-10-06 12:40:01,UNet_3inChs_1L_24bf_CanyonDataset_5imgsPerCanyon_2epochs,5.89,12.093926
+2025-10-06 12:40:13,UNet_3inChs_2L_24bf_CanyonDataset_5imgsPerCanyon_2epochs,5.94,15.497117
+2025-10-06 12:40:26,UNet_3inChs_3L_24bf_CanyonDataset_5imgsPerCanyon_2epochs,6.44,9.604849
