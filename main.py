@@ -5,12 +5,12 @@
 # --------------------------------------------------------------------------------- #
 
 '''
-TODO: 
+TODO:       
             Pretrained model
             Sift features as Prior
             K-fold Crossvalidation
-            Saveing Best Model -> whene val loss starts to increase
-            R
+            Saveing Best Model -> whene val loss starts to increase - done
+            Update requirements.txt
 
 '''
 
@@ -37,8 +37,6 @@ from test import test_model
 from model import *
 from utils import *
 
-import matplotlib.pyplot as plt
-from functools import partial
 
 
 # --------------------------------------------------------------------------------- #
@@ -112,12 +110,15 @@ def train_test_model(dataset_paths = canyon_seaErra_depth_paths,
         n_samples_of_each_canyon: zb [10,100,1000] -> will train multiple models on spezified dataset sizes
         test_num_samples: number of samples to visualize in test
     """
+    model_named = False
+    if model_name is not None:
+        model_named = True
 
     for n in n_samples_of_each_canyon:
 
         # model name
-        if model_name is None:
-            model_name = f"{model_class.__name__}_{dataset_class.__name__}_{n}imgsPerCanyon_{num_epochs}epochs"
+        if model_named is False:
+            model_name = f"{model_class.__name__}_{dataset_class.__name__}_{n}imgsPerCanyon"
 
 
         print_title(f"START (model name: {model_name})")
@@ -134,7 +135,7 @@ def train_test_model(dataset_paths = canyon_seaErra_depth_paths,
 
         train_loader = DataLoader(train_dataset, batch_size = batch_size, shuffle = True)
         val_loader   = DataLoader(val_dataset, batch_size = batch_size, shuffle = True)
-        test_loader  = DataLoader(test_dataset, batch_size = 1, shuffle = False)
+        test_loader  = DataLoader(test_dataset, batch_size = batch_size, shuffle = False)
 
         # Results folder
         results_folder_path = create_results_folder(model_name = model_name)
@@ -152,7 +153,7 @@ def train_test_model(dataset_paths = canyon_seaErra_depth_paths,
         all_losses[n] = (train_losses, val_losses)
 
         # Test
-        test_mse = test_model(
+        test_loss = test_model(
             model, test_loader, device, results_folder_path,
             num_samples = test_num_samples,
             model_name = model_name
@@ -166,7 +167,7 @@ def train_test_model(dataset_paths = canyon_seaErra_depth_paths,
         )
 
         # log
-        log(model_name, train_time, test_mse)
+        log(model_name, train_time, test_loss)
 
     print_title(f"END ({model_name})")
 
@@ -207,29 +208,45 @@ if __name__ == "__main__":
     #        select what you want to run
     # ------------------------------------------------
 
-    # ---------- Flexible U-Net TEST -----------------
+    model_class_list_3inChs = [
+        UNet_3inChs_1L_12bc,
+        UNet_3inChs_2L_12bc,
+        UNet_3inChs_3L_12bc,
+
+        UNet_3inChs_1L_24bf,
+        UNet_3inChs_2L_24bf,
+        UNet_3inChs_3L_24bf
+        ]
+    model_class_list_4inChs = [
+        UNet_4inChs_1L_12bc,
+        UNet_4inChs_2L_12bc,
+        UNet_4inChs_3L_12bc,
+
+        UNet_4inChs_1L_24bf,
+        UNet_4inChs_2L_24bf,
+        UNet_4inChs_3L_24bf
+        ]
+
     if True:
-        model_class_list = [
-            UNet_3inChs_1L_12bc,
-            UNet_3inChs_2L_12bc,
-            UNet_3inChs_3L_12bc,
+        for model_class in model_class_list_3inChs:
+            count_parameters(model_class())
+        for model_class in model_class_list_4inChs:
+            count_parameters(model_class())
 
-            UNet_3inChs_1L_24bf,
-            UNet_3inChs_2L_24bf,
-            UNet_3inChs_3L_24bf
-            ]
+    # ---------- Flexible U-Net TEST -----------------
+    if False:
 
-        for model_class in model_class_list:
+        for model_class in model_class_list_4inChs:
             train_test_model(
                 dataset_paths = canyon_seaErra_depth_paths,
                 model_class = model_class,
                 model_name = None,
-                n_samples_of_each_canyon = [5],
-                num_epochs = 2,
+                n_samples_of_each_canyon = [10,100],
+                num_epochs = 10,
                 batch_size = 4,
                 split = (0.7,0.2,0.1),
-                dataset_class = CanyonDataset,
-                test_num_samples = 3
+                dataset_class = CanyonDatasetWithPrior1,
+                test_num_samples = 10
                 )
 
 

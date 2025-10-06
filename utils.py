@@ -6,7 +6,6 @@ import csv
 import torch
 from torch.utils.data import DataLoader
 
-from test import test_model
 from dataset import split_dataset
 
 # --------------------------------------------------------------------------------- #
@@ -52,10 +51,10 @@ def save_model_at(model, folder_path, model_name = "noName"):
     os.makedirs(folder_path, exist_ok=True)
     model_path = os.path.join(folder_path, f"{model_name}.pth")
     torch.save(model.state_dict(), model_path)
-    print(f"Model saved at {model_path}")
+    print(f"\n-> Model saved at {model_path}")
 
 
-def log(model_name, train_time, test_mse):
+def log(model_name, train_time, test_loss):
     """
     Logs Training information
     """
@@ -71,13 +70,13 @@ def log(model_name, train_time, test_mse):
         writer.writerow([datetime.now().strftime('%Y-%m-%d %H:%M:%S'), 
                          model_name, 
                          f"{train_time:.2f}", 
-                         f"{test_mse:.6f}"])
+                         f"{test_loss:.6f}"])
     
     # TXT log
     txt_file = os.path.join(script_dir, "training_runs_log.txt")
     with open(txt_file, 'a') as f:
         f.write(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] "
-                f"Model: {model_name} | Training Time: {train_time:.2f}s or {train_time/60:.2f}min or {train_time/3600:.2f}h | Test MSE: {test_mse:.6f}\n")
+                f"Model: {model_name} | Training Time: {train_time:.2f}s or {train_time/60:.2f}min or {train_time/3600:.2f}h | Test Loss: {test_loss:.6f}\n")
 
 
 def test_saved_model(model_class, model_path, dataset_class, rgb_folder, depth_folder, results_folder, num_samples=5, name="saved"):
@@ -85,6 +84,7 @@ def test_saved_model(model_class, model_path, dataset_class, rgb_folder, depth_f
     Load a trained model and test it. (Plots some Plots)
     Runs test.py for a selected model
     """
+    from test import test_model
 
     # Select device
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -162,3 +162,36 @@ def plot_rgb_depth_prior(dataset, idx=0):
         axes[2].scatter(x, y, color='red', s=50, edgecolors='white')
     
     plt.show()
+
+
+
+def rmse_loss(pred, target, mask=None):
+    if mask is not None:
+        pred = pred[mask]
+        target = target[mask]
+    return torch.sqrt(nn.MSELoss(reduction = 'mean')(pred, target))
+
+def silog_loss(pred, target, mask=None, eps=1e-6, lam=0.85):
+    if mask is not None:
+        pred = pred[mask]
+        target = target[mask]
+    pred = torch.clamp(pred, min=eps)
+    target = torch.clamp(target, min=eps)
+    
+    d = torch.log(pred) - torch.log(target)
+    return torch.sqrt(torch.mean(d**2) - lam * (torch.mean(d))**2)
+
+def combined_loss(pred, target, mask=None):
+    rmse = rmse_loss(pred, target, mask)
+    silog = silog_loss(pred, target, mask)
+    return 0.4 * rmse + 0.6 * silog
+
+
+
+
+def count_parameters(model):
+    total_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    model_name = type(model).__name__
+    print(f"(Model: {model_name}) Total trainable parameters: {total_params:,}")
+
+

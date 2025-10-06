@@ -1,9 +1,13 @@
 import os
 import torch
 from torch.utils.data import DataLoader
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import torch.nn as nn
 import numpy as np
+
+from utils import combined_loss
 
 def test_model(model, test_loader, device, results_folder, num_samples = 5, model_name = 'noName'):
     """
@@ -11,7 +15,7 @@ def test_model(model, test_loader, device, results_folder, num_samples = 5, mode
     """
 
     print("\\"*50)
-    print("\n\nTesting Dataset...")
+    print("Testing Dataset...")
 
     model.eval()
 
@@ -47,11 +51,10 @@ def test_model(model, test_loader, device, results_folder, num_samples = 5, mode
 
             # Compute masked MSE for the first item in batch
             valid_mask = (depth[0] > 0) & (~torch.isnan(depth[0]))
-            mse_map = (pred[0] - depth[0])**2
-            mse_single = mse_map[valid_mask].mean().item()
+            loss = combined_loss(pred[0], depth[0], mask=valid_mask).item()
 
             # Add MSE to the figure title
-            fig.suptitle(f"{model_name} - Test Sample {i} - Masked MSE: {mse_single:.4f}", fontsize=24)
+            fig.suptitle(f"{model_name} - Test Sample {i} - Masked Loss: {loss:.4f}", fontsize=24)
 
             title_fontsize = 22
 
@@ -95,10 +98,9 @@ def test_model(model, test_loader, device, results_folder, num_samples = 5, mode
             if i+1 >= num_samples:
                 break
 
-    # Compute overall MSE
-    mse_total = 0.0
-    count = 0
 
+    # test loss
+    running_loss = 0.0
     with torch.no_grad():
         for batch in test_loader:
             rgb, depth = batch[:2]
@@ -106,12 +108,11 @@ def test_model(model, test_loader, device, results_folder, num_samples = 5, mode
             pred = model(rgb)
 
             valid_mask = (depth > 0) & (~torch.isnan(depth))
-            mse_map = nn.MSELoss(reduction='none')(pred, depth)
-            mse_total += mse_map[valid_mask].mean().item()
-            count += 1
+            batch_loss = combined_loss(pred, depth, mask=valid_mask)
+            running_loss += batch_loss.item()
 
-    test_mse = mse_total / count
-    print("Average masked MSE on test set:", test_mse)
+    test_loss = running_loss / len(test_loader)
+    print("Average masked combined loss on test set:", test_loss)
     print("\\"*50)
     
-    return test_mse
+    return test_loss

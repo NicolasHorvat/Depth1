@@ -57,18 +57,26 @@ class CanyonDatasetWithPrior1(CanyonDataset):
         ys = torch.randint(0, H, (num_points,))
         xs = torch.randint(0, W, (num_points,))
         known_points = torch.stack([ys, xs], dim=1)
-        known_depths = depth[0, ys, xs]
+        known_depths = depth[0, ys, xs]  # [num_points]
 
-        # Assign each pixel the depth of the nearest known point (naive loop)
-        for y in range(H):
-            for x in range(W):
-                # Compute distances to all known points
-                dists = (ys - y)**2 + (xs - x)**2
-                nearest_idx = torch.argmin(dists)
-                prior[0, y, x] = known_depths[nearest_idx]
+        # Generate a grid of all pixel coordinates
+        yy, xx = torch.meshgrid(torch.arange(H), torch.arange(W), indexing='ij')
+        yy = yy.unsqueeze(0)  # [1,H,W]
+        xx = xx.unsqueeze(0)  # [1,H,W]
 
-        # Concatenate
+        # Compute squared distances from all pixels to all known points
+        # (num_points, H, W)
+        dists = (yy - ys[:, None, None])**2 + (xx - xs[:, None, None])**2
+
+        # Find the nearest known point for each pixel
+        nearest_idx = torch.argmin(dists, dim=0)  # [H, W]
+
+        # Assign depth from nearest known point
+        prior[0] = known_depths[nearest_idx]  # broadcasting
+
+        # Concatenate prior
         rgb_with_prior = torch.cat([rgb, prior], dim=0)  # [4,H,W]
+        
         return rgb_with_prior, depth, known_points
 
 

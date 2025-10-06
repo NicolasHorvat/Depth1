@@ -120,10 +120,10 @@ class UNet(nn.Module):
 
         return self.out_conv(x)
 
-
+# ------------- 3Channels --------------
 class UNet_3inChs_1L_12bc(UNet):
     def __init__(self):
-        super().__init__(input_channels = 3, output_channels = 1, num_layers = 2, base_channels = 12)
+        super().__init__(input_channels = 3, output_channels = 1, num_layers = 1, base_channels = 12)
 
 class UNet_3inChs_2L_12bc(UNet):
     def __init__(self):
@@ -136,7 +136,7 @@ class UNet_3inChs_3L_12bc(UNet):
 
 class UNet_3inChs_1L_24bf(UNet):
     def __init__(self):
-        super().__init__(input_channels = 3, output_channels = 1, num_layers = 2, base_channels = 24)
+        super().__init__(input_channels = 3, output_channels = 1, num_layers = 1, base_channels = 24)
 
 class UNet_3inChs_2L_24bf(UNet):
     def __init__(self):
@@ -145,6 +145,33 @@ class UNet_3inChs_2L_24bf(UNet):
 class UNet_3inChs_3L_24bf(UNet):
     def __init__(self):
         super().__init__(input_channels = 3, output_channels = 1, num_layers = 3, base_channels = 24)
+
+# ------------- 4Channels --------------
+
+class UNet_4inChs_1L_12bc(UNet):
+    def __init__(self):
+        super().__init__(input_channels = 4, output_channels = 1, num_layers = 1, base_channels = 12)
+
+class UNet_4inChs_2L_12bc(UNet):
+    def __init__(self):
+        super().__init__(input_channels = 4, output_channels = 1, num_layers = 2, base_channels = 12)
+
+class UNet_4inChs_3L_12bc(UNet):
+    def __init__(self):
+        super().__init__(input_channels = 4, output_channels = 1, num_layers = 3, base_channels = 12)
+
+
+class UNet_4inChs_1L_24bf(UNet):
+    def __init__(self):
+        super().__init__(input_channels = 4, output_channels = 1, num_layers = 1, base_channels = 24)
+
+class UNet_4inChs_2L_24bf(UNet):
+    def __init__(self):
+        super().__init__(input_channels = 4, output_channels = 1, num_layers = 2, base_channels = 24)
+
+class UNet_4inChs_3L_24bf(UNet):
+    def __init__(self):
+        super().__init__(input_channels = 4, output_channels = 1, num_layers = 3, base_channels = 24)
 
 
 
