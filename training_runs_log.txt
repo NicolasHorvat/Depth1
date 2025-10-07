@@ -45,3 +45,4 @@
 [2025-10-06 23:59:40] Model: UNet_4inChs_1L_24bf_CanyonDatasetWithPrior1_1000imgs | Training Time: 7399.27s or 123.32min or 2.06h | Test Loss: 0.366685
 [2025-10-07 02:02:47] Model: UNet_4inChs_2L_12bc_CanyonDatasetWithPrior1_1000imgs | Training Time: 7279.49s or 121.32min or 2.02h | Test Loss: 0.310875
 [2025-10-07 04:11:35] Model: UNet_4inChs_2L_24bf_CanyonDatasetWithPrior1_1000imgs | Training Time: 7618.44s or 126.97min or 2.12h | Test Loss: 0.287441
+[2025-10-07 16:39:12] Model: UNet_4inChs_2L_12bc_CanyonDatasetSiftPriors_1000imgs | Training Time: 3411.28s or 56.85min or 0.95h | Test Loss: 0.422784

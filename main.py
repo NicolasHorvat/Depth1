@@ -30,8 +30,7 @@ if not (sys.prefix.endswith('Depth1_venv') or sys.prefix.endswith('Depth1_venv1'
 
 import torch
 from torch.utils.data import DataLoader
-from dataset import CanyonDataset, CanyonDatasetWithPrior, CanyonDatasetWithPrior1
-from dataset import combine_canyons
+from dataset import *
 from train import train_model
 from test import test_model
 from model import *
@@ -230,7 +229,7 @@ if __name__ == "__main__":
         UNet_4inChs_2L_24bf
         ]
 
-    if True:
+    if False:
         for model_class in model_class_list_3inChs:
             count_parameters(model_class())
         print("\n")
@@ -238,7 +237,7 @@ if __name__ == "__main__":
             count_parameters(model_class())
 
     # ---------- Flexible U-Net TEST -----------------
-    if True:
+    if False:
 
         for model_class in model_class_list_4inChs_test:
             train_test_model(
@@ -269,16 +268,16 @@ if __name__ == "__main__":
             )
 
     # ---------- U-Net, 4 Channels -----------------
-    if False:
+    if True:
         train_test_model(
             dataset_paths = canyon_seaErra_depth_paths,
-            model_class = UNet_4channels,
+            model_class = UNet_4inChs_2L_12bc,
             model_name = None,
-            n_list = [10],
-            num_epochs = 4,
+            n_list = [1000],
+            num_epochs = 3,
             batch_size = 4,
             split = (0.7,0.2,0.1),
-            dataset_class = CanyonDatasetWithPrior,
+            dataset_class = CanyonDatasetSiftPriors,
             test_num_samples = 10
             )
 
@@ -315,16 +314,16 @@ if __name__ == "__main__":
         _, _, test_dataset = combine_canyons(
             paths = canyon_seaErra_depth_paths,
             dataset_class = CanyonDatasetWithPrior1,
-            n = 100,
+            n = 40,
             split = (0.7,0.2,0.1)
         )
         test_saved_model(
-            model_class = UNet_4channels,
-            model_path = r"H:\Depth1\results\Results_UNet_4channels_10imgsPerCanyon_4_2025.10.05_23-39\UNet_4channels_10imgsPerCanyon_4.pth",
+            model_class = UNet_4inChs_2L_24bf,
+            model_path = r"H:\Depth1\results\Results_UNet_4inChs_2L_24bf_CanyonDatasetWithPrior1_1000imgs_2025.10.07_02-02\UNet_4inChs_2L_24bf_CanyonDatasetWithPrior1_1000imgs.pth",
             test_dataset = test_dataset,
             device = 'cuda',
             num_samples = 5,
-            folder=r"H:\Depth1\results\Results_UNet_4channels_10imgsPerCanyon_4_2025.10.05_23-39"
+            folder=r"H:\Depth1\results\Results_UNet_4inChs_2L_24bf_CanyonDatasetWithPrior1_1000imgs_2025.10.07_02-02"
         )
 
     # ---------- Testing Random Stuff --------------

@@ -1,2 +1,6 @@
 # Ignore virtual environment
 Depth1_venv/
+
+# Ignore video output folders (to large)
+videos_mp4/
+videos_avi/

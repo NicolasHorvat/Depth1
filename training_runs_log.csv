@@ -45,3 +45,4 @@
 2025-10-06 23:59:40,UNet_4inChs_1L_24bf_CanyonDatasetWithPrior1_1000imgs,7399.27,0.366685
 2025-10-07 02:02:47,UNet_4inChs_2L_12bc_CanyonDatasetWithPrior1_1000imgs,7279.49,0.310875
 2025-10-07 04:11:35,UNet_4inChs_2L_24bf_CanyonDatasetWithPrior1_1000imgs,7618.44,0.287441
+2025-10-07 16:39:12,UNet_4inChs_2L_12bc_CanyonDatasetSiftPriors_1000imgs,3411.28,0.422784
