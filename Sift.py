@@ -1,27 +1,11 @@
+import os
 import cv2
 import numpy as np
-import os
 import pickle
 import matplotlib.pyplot as plt
 from tqdm import tqdm
  
-
-# --------------------------------------------------------------------------------- #
-#                                    Paths
-# --------------------------------------------------------------------------------- #
-
-# reminder to change the canyons folder path
-print("\n(Reminder to change the canyons folder path)")
-
-# canyons_path = r"C:\Users\nicol\ETH\Master_Thesis\canyons" # path to canyons data from FLSea VI
-canyons_path = r"H:\canyons" # path to canyons data from FLSea VI on my SSD                                    <-------  Dataset Path !!!
-
-tiny_canyon_path = os.path.join(canyons_path, "tiny_canyon")
-tiny_canyon_depth_path = os.path.join(tiny_canyon_path, "depth")
-tiny_canyon_imgs_path = os.path.join(tiny_canyon_path, "imgs")
-tiny_canyon_seaErra_path = os.path.join(tiny_canyon_path, "seaErra")
-
-
+from paths import *
 
 
 def match_sift_features(img1, img2):
@@ -63,7 +47,6 @@ def match_sift_features(img1, img2):
     pts2_in = pts2[inliers]
 
     return pts1_in, pts2_in
-
 
 
 def visualize_sift_matches(img1_path, img2_path, max_matches=1000):
@@ -109,12 +92,11 @@ def visualize_sift_matches(img1_path, img2_path, max_matches=1000):
     plt.show()
 
 
-
 def save_all_sift_features_of_dataset(imgs_folder):
     '''
     creates and saves sift features for a given dataset
     saves them in the datasets_sift_matches folder
-    Returns the path if it already exists
+    Returns the path
     '''
 
     # save path
@@ -129,7 +111,7 @@ def save_all_sift_features_of_dataset(imgs_folder):
 
     # check if file already exists
     if os.path.exists(save_path):
-        print(f"Matches for {folder_name} already exist at {save_path}. Skipping computation.")
+        print(f"-> Matches for {folder_name} already exist at {save_path} ->  Skipping computation")
         return save_path 
 
     sorted_imgs = sorted(os.listdir(imgs_folder))
@@ -159,29 +141,37 @@ def save_all_sift_features_of_dataset(imgs_folder):
 
     print(f"Saved Sift matches for {parent_folder_name}_{folder_name} in {save_path}")
 
+    return save_path
 
 
-def create_sift_video(matches_file, imgs_folder, fps=10):
+def create_sift_video(imgs_folder, fps=10):
     """
     Create a video showing SIFT matches across a dataset.
     """
-    # load matches
-    with open(matches_file, 'rb') as f:
-        all_matches = pickle.load(f)
 
-    # sort images
-    sorted_imgs = sorted(os.listdir(imgs_folder))
-
-    # determine save path
-    dataset_name = os.path.basename(os.path.normpath(imgs_folder))
-    save_name = f"sift_video_{dataset_name}.mp4"
-    save_path = os.path.join(os.path.dirname(matches_file), save_name)
+    # save path
+    parent_folder_name = os.path.basename(os.path.dirname(os.path.normpath(imgs_folder)))
+    folder_name = os.path.basename(os.path.normpath(imgs_folder))
 
     script_dir = os.path.dirname(os.path.abspath(__file__))
     save_folder = os.path.join(script_dir, "sift_videos")
     os.makedirs(save_folder, exist_ok=True)
 
-    save_path = os.path.join(save_folder, save_name)
+    save_path = os.path.join(save_folder, f"sift_video_{parent_folder_name}_{folder_name}.mp4")
+
+    # check if video already exists
+    if os.path.exists(save_path):
+        print(f"-> Video for {parent_folder_name}_{folder_name} already exists at {save_path} ->  Skipping creation")
+        return save_path
+
+
+    # load matches
+    matches_file = save_all_sift_features_of_dataset(imgs_folder)
+    with open(matches_file, 'rb') as f:
+        all_matches = pickle.load(f)
+
+    # sort images
+    sorted_imgs = sorted(os.listdir(imgs_folder))
 
     # get video size from first image
     frame_height, frame_width = cv2.imread(os.path.join(imgs_folder, sorted_imgs[0])).shape[:2]
@@ -221,22 +211,28 @@ def create_sift_video(matches_file, imgs_folder, fps=10):
     out.release()
     print(f"Sift Video saved to {save_path}")
 
+    return save_path
 
 
 
-# ----------------------------Main--------------------------------
+# ----------------------------Main-----------------------------------------------------------------
 
-# ----------------- get sift features of dataset -------------
-sift_matches_tiny_canyon_imgs_path = save_all_sift_features_of_dataset(tiny_canyon_imgs_path)
+# ----------------- get sift features of Canyon Datasets ------------------------------------------
 
-# ------------------- create a video of it -------------------
-create_sift_video(sift_matches_tiny_canyon_imgs_path, tiny_canyon_imgs_path, fps=10)
+for path in tqdm(canyon_imgs_and_seaErra_paths, desc="Progress", ncols = 100, leave= True):
+
+    sift_matches_tiny_canyon_imgs_path = save_all_sift_features_of_dataset(path)
+
+# ------------------- create a video of it ---------------------------------------------------------
+for path in tqdm(canyon_imgs_and_seaErra_paths, desc="Progress", ncols = 100, leave= True):
+    
+    create_sift_video(path, fps=10)
 
 
-# ---------------- image visualization --------------
+# ---------------- image visualization -------------------------------------------------------------
 sorted_tiny_canyon_imgs = sorted(os.listdir(tiny_canyon_imgs_path))
 img1_path = os.path.join(tiny_canyon_imgs_path, sorted_tiny_canyon_imgs[500])
 img2_path = os.path.join(tiny_canyon_imgs_path, sorted_tiny_canyon_imgs[501])
 
-visualize_sift_matches(img1_path, img2_path, max_matches=100)
+visualize_sift_matches(img1_path, img2_path)
 

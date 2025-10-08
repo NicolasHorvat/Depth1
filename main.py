@@ -30,59 +30,13 @@ if not (sys.prefix.endswith('Depth1_venv') or sys.prefix.endswith('Depth1_venv1'
 
 import torch
 from torch.utils.data import DataLoader
+
+from paths import *
 from dataset import *
-from train import train_model
+from train import *
 from test import *
 from model import *
 from utils import *
-
-
-
-# --------------------------------------------------------------------------------- #
-#                                    Paths
-# --------------------------------------------------------------------------------- #
-
-# reminder to change the canyons folder path
-print("\n(Reminder to change the canyons folder path)")
-
-# canyons_path = r"C:\Users\nicol\ETH\Master_Thesis\canyons" # path to canyons data from FLSea VI
-canyons_path = r"H:\canyons" # path to canyons data from FLSea VI on my SSD                                    <-------  Dataset Path !!!
-
-# paths to the different folders in canyon
-flatiron_path = os.path.join(canyons_path, "flatiron")
-flatiron_depth_path = os.path.join(flatiron_path, "depth")
-flatiron_imgs_path = os.path.join(flatiron_path, "imgs")
-flatiron_seaErra_path = os.path.join(flatiron_path, "seaErra")
-
-horse_canyon_path = os.path.join(canyons_path, "horse_canyon")
-horse_canyon_depth_path = os.path.join(horse_canyon_path, "depth")
-horse_canyon_imgs_path = os.path.join(horse_canyon_path, "imgs")
-horse_canyon_seaErra_path = os.path.join(horse_canyon_path, "seaErra")
-
-tiny_canyon_path = os.path.join(canyons_path, "tiny_canyon")
-tiny_canyon_depth_path = os.path.join(tiny_canyon_path, "depth")
-tiny_canyon_imgs_path = os.path.join(tiny_canyon_path, "imgs")
-tiny_canyon_seaErra_path = os.path.join(tiny_canyon_path, "seaErra")
-
-u_canyon_path = os.path.join(canyons_path, "u_canyon")
-u_canyon_depth_path = os.path.join(u_canyon_path, "depth")
-u_canyon_imgs_path = os.path.join(u_canyon_path, "imgs")
-u_canyon_seaErra_path = os.path.join(u_canyon_path, "seaErra")
-
-
-canyon_imgs_depth_paths = [
-    (flatiron_imgs_path, flatiron_depth_path),
-    (horse_canyon_imgs_path, horse_canyon_depth_path),
-    (tiny_canyon_imgs_path, tiny_canyon_depth_path),
-    (u_canyon_imgs_path, u_canyon_depth_path)
-]
-
-canyon_seaErra_depth_paths = [
-    (flatiron_seaErra_path, flatiron_depth_path),
-    (horse_canyon_seaErra_path, horse_canyon_depth_path),
-    (tiny_canyon_seaErra_path, tiny_canyon_depth_path),
-    (u_canyon_seaErra_path, u_canyon_depth_path)
-]
 
 
 

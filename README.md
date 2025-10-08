@@ -12,6 +12,7 @@ It is inspired by [this research](https://ieeexplore.ieee.org/abstract/document/
 | File | Description |
 |------|-------------|
 | `main.py` | Main script to select and run different tasks. |
+| `paths.py` | Paths to Canyon datasets and path lists |
 | `dataset.py` | Dataset classes (with or without prior information like SIFT features). |
 | `model.py` | Model definitions (currently includes U-Nets). |
 | `train.py` | Training function for models. |
@@ -27,6 +28,7 @@ It is inspired by [this research](https://ieeexplore.ieee.org/abstract/document/
 ## Getting Started
 
 1. **Download the dataset** from Kaggle.  
-2. Update the **dataset path** in the scripts:  
+2. Update the **dataset path** in paths.py:  
 3. pip install -r requirements.txt (into your Venv)
+4. experiment in main.py, Sift.py ect.
 
