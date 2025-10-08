@@ -2,10 +2,12 @@ import os
 import cv2
 import numpy as np
 import pickle
+import tifffile
 import matplotlib.pyplot as plt
 from tqdm import tqdm
  
 from paths import *
+from utils import print_title
 
 
 def match_sift_features(img1, img2):
@@ -52,70 +54,43 @@ def match_sift_features(img1, img2):
     return pts1_in, pts2_in
 
 
-def visualize_sift_matches(img1_path, img2_path, max_matches=1000):
-    """
-    Visualizes SIFT matches between two frames.
-    """
+def get_canyon_sift_features_path(imgs_folder):
+    '''
+    returns path to the canyons sift features
+    '''
+    canyon_name = os.path.basename(os.path.dirname(os.path.normpath(imgs_folder)))
+    folder_name = os.path.basename(os.path.normpath(imgs_folder))
 
-    # read images
-    img1 = cv2.imread(img1_path)
-    img2 = cv2.imread(img2_path)
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    save_folder = os.path.join(script_dir, "canyons_sift_features")
+    os.makedirs(save_folder, exist_ok=True)
 
-    # get matching sift features
-    pts1, pts2 = match_sift_features(img1, img2)
+    canyon_sift_features_path = os.path.join(save_folder, f'sift_features_{canyon_name}_{folder_name}.pkl')
 
-    # Combine
-    h1, w1 = img1.shape[:2]
-    h2, w2 = img2.shape[:2]
-    vis = np.zeros((max(h1, h2), w1 + w2, 3), dtype=np.uint8)
-    vis[:h1, :w1] = img1
-    vis[:h2, w1:w1 + w2] = img2
-
-
-    for i in range(min(len(pts1), max_matches)):
-        # get points
-        x1, y1 = pts1[i]
-        x2, y2 = pts2[i]
-        p1 = (int(x1), int(y1))
-        p2 = (int(x2) + w1, int(y2))
-
-        # random color
-        color = tuple(np.random.randint(0, 255, 3).tolist())
-
-        # draw circles and lines
-        cv2.circle(vis, p1, 4, color, -1)
-        cv2.circle(vis, p2, 4, color, -1)
-        cv2.line(vis, p1, p2, color, 1)
-
-    # plot
-    plt.figure(figsize=(16, 8))
-    plt.imshow(cv2.cvtColor(vis, cv2.COLOR_BGR2RGB)) # bgr -> rgb
-    plt.title(f"SIFT matches: {len(pts1)} inliers shown")
-    plt.axis('off')
-    plt.show()
+    return canyon_sift_features_path
 
 
 def save_all_sift_features_of_dataset(imgs_folder):
     '''
     creates and saves sift features for a given dataset
-    saves them in the datasets_sift_matches folder
+    saves them in the canyons_sift_features folder
     Returns the path
     '''
 
     # save path
-    parent_folder_name = os.path.basename(os.path.dirname(os.path.normpath(imgs_folder)))
+    canyon_name = os.path.basename(os.path.dirname(os.path.normpath(imgs_folder)))
     folder_name = os.path.basename(os.path.normpath(imgs_folder))
-    print(f"Computing Sift matches for {parent_folder_name}_{folder_name}")
+    print(f"Computing Sift matches for {canyon_name}_{folder_name}")
 
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    save_folder = os.path.join(script_dir, "datasets_sift_matches")
+    save_folder = os.path.join(script_dir, "canyons_sift_features")
     os.makedirs(save_folder, exist_ok=True)
 
-    save_path = os.path.join(save_folder, f'sift_matches_{parent_folder_name}_{folder_name}.pkl')
+    save_path = os.path.join(save_folder, f'sift_features_{canyon_name}_{folder_name}.pkl')
 
     # check if file already exists
     if os.path.exists(save_path):
-        print(f"-> Matches for {parent_folder_name}_{folder_name} already exist at {save_path} ->  Skipping computation")
+        print(f"-> Sift features for {canyon_name}_{folder_name} already exist at {save_path} ->  Skipping computation")
         return save_path 
 
     sorted_imgs = sorted(os.listdir(imgs_folder))
@@ -143,7 +118,7 @@ def save_all_sift_features_of_dataset(imgs_folder):
     with open(save_path, 'wb') as f:
         pickle.dump(all_matches, f)
 
-    print(f"Saved Sift matches for {parent_folder_name}_{folder_name} in {save_path}")
+    print(f"Saved Sift matches for {canyon_name}_{folder_name} in {save_path}")
 
     return save_path
 
@@ -269,34 +244,31 @@ def combine_sift_videos_side_by_side(canyon_path, fps=10, codec = "XVID", ext=".
     return save_path
 
 
-# ----------------------------Main------------------------------------------------------------
 
-# ----------------- get sift features of Canyon Datasets -------------------------------------
-
-for path in tqdm(canyon_imgs_and_seaErra_paths, desc="Progress", ncols = 100, leave= True):
-    sift_matches_tiny_canyon_imgs_path = save_all_sift_features_of_dataset(path)
-
-# ------------------- create a video of it ---------------------------------------------------
-
-for path in tqdm(canyon_imgs_and_seaErra_paths, desc="Progress", ncols = 100, leave= True):
-    create_sift_video(path, fps=10, codec = "mp4v", ext=".mp4")
+# ----------------------------------------------------------------------------------------
+#                               Main (sift.py)
+# ----------------------------------------------------------------------------------------
+if __name__ == "__main__":
 
 
-for path in tqdm(canyons_paths, desc="Progress", ncols = 100, leave= True):
-    combine_sift_videos_side_by_side(path, fps=10, codec = "mp4v", ext=".mp4")
+    # ----- get sift features of Canyon Datasets -----
 
+    print_title("sift.py")
 
-# ---------------- image visualization -------------------------------------------------------
-sorted_tiny_canyon_imgs = sorted(os.listdir(tiny_canyon_imgs_path))
-img1_path = os.path.join(tiny_canyon_imgs_path, sorted_tiny_canyon_imgs[500])
-img2_path = os.path.join(tiny_canyon_imgs_path, sorted_tiny_canyon_imgs[501])
+    print("\nGetting sift features for canyons imgs and seaErra:\n")
 
-sorted_tiny_canyon_seaErra = sorted(os.listdir(tiny_canyon_seaErra_path))
-img3_path = os.path.join(tiny_canyon_seaErra_path, sorted_tiny_canyon_seaErra[500])
-img4_path = os.path.join(tiny_canyon_seaErra_path, sorted_tiny_canyon_seaErra[501])
+    for path in tqdm(canyon_imgs_and_seaErra_paths, desc="Progress", ncols = 100, leave= True):
+        sift_matches_tiny_canyon_imgs_path = save_all_sift_features_of_dataset(path)
 
-visualize_sift_matches(img1_path, img2_path)
-visualize_sift_matches(img3_path, img4_path)
+    # ----- create a video of it -----
 
-# way more sift features detected in seaErra set than in imgs set
+    print("\nCreating videos of canyons imgs and seaErra with the sift features:\n")
+
+    for path in tqdm(canyon_imgs_and_seaErra_paths, desc="Progress", ncols = 100, leave= True):
+        create_sift_video(path, fps=10, codec = "mp4v", ext=".mp4")
+
+    print("\nCreating combinded videos of canyons imgs and seaErra with the sift features:\n")
+
+    for path in tqdm(canyons_paths, desc="Progress", ncols = 100, leave= True):
+        combine_sift_videos_side_by_side(path, fps=10, codec = "mp4v", ext=".mp4")
 

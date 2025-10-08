@@ -11,16 +11,6 @@ script used to create videos of the FLSea canyons Datasets
 '''
 
 
-
-# Set default codec and extension
-if False:
-    default_codec = "XVID"  # for AVI
-    default_ext   = ".avi"
-if True:
-    default_codec = "mp4v"   # for mp4
-    default_ext = ".mp4"
-
-
 # ---------- Make video ----------    make_video(path, codec = default_codec, ext = default_ext)
 def make_video(imgs_path, fps=10, codec = "XVID", ext=".avi"):
     '''
@@ -194,12 +184,21 @@ def stack_all_combined_videos_vertically(fps=10, codec="XVID", ext=".avi"):
 # ---------------------------------------------------------------------------------
 #                  Main - Calling Functions
 # ---------------------------------------------------------------------------------
+if __name__ == "__main__":
+    
+    # Set default codec and extension
+    if False:
+        default_codec = "XVID"  # for AVI
+        default_ext   = ".avi"
+    if True:
+        default_codec = "mp4v"   # for mp4
+        default_ext = ".mp4"
 
-for path in canyon_imgs_seaErra_and_depth_paths:
+    for path in canyon_imgs_seaErra_and_depth_paths:
 
-    make_video(path, fps=10, codec = default_codec, ext = default_ext)
+        make_video(path, fps=10, codec = default_codec, ext = default_ext)
 
-for path in canyons_paths:
-    combine_videos_side_by_side(path, fps = 10, codec = default_codec, ext = default_ext)
+    for path in canyons_paths:
+        combine_videos_side_by_side(path, fps = 10, codec = default_codec, ext = default_ext)
 
-stack_all_combined_videos_vertically(fps = 10, codec = default_codec, ext = default_ext)
+    stack_all_combined_videos_vertically(fps = 10, codec = default_codec, ext = default_ext)

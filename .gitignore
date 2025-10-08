@@ -8,4 +8,9 @@ sift_videos_mp4/
 sift_videos_avi/
 
 # Ignore sift features (compute them with Sift.py)
-datasets_sift_matches/
+canyons_sift_features/
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class

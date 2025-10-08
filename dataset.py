@@ -3,6 +3,7 @@ import cv2
 import torch
 from torch.utils.data import Dataset, Subset, ConcatDataset
 import tifffile
+import pickle
 
 
 class CanyonDataset(Dataset):
@@ -27,6 +28,7 @@ class CanyonDataset(Dataset):
         depth_tensor = torch.tensor(depth).unsqueeze(0)         # [H, W]    -> [1,H,W]
 
         return rgb_tensor, depth_tensor
+    
 
 
 class CanyonDatasetSiftPriors(CanyonDataset):
