@@ -5,16 +5,28 @@ It is inspired by [this research](https://ieeexplore.ieee.org/abstract/document/
 
 -> The Canyons Dataset is **not included** in this repository. Download it from Kaggle and specify the path in the scripts.
 
+---
 
+## Project Structure
 
-## Project Structure ##
+| File | Description |
+|------|-------------|
+| `main.py` | Main script to select and run different tasks. |
+| `dataset.py` | Dataset classes (with or without prior information like SIFT features). |
+| `model.py` | Model definitions (currently includes U-Nets). |
+| `train.py` | Training function for models. |
+| `test.py` | Testing and evaluation scripts. |
+| `utils.py` | Utility functions used throughout the project. |
+| `log_plot.py` | Plots training logs and compares metrics like time and loss across runs. |
+| `sift_test.py` | Experimental SIFT feature detection tests. |
+| `Sift.py` | SIFT feature matches across two framesgeneration. And Video |
+| `get_videos.py` | Generates videos of the dataset (RGB, SeaError, Depth). |
 
-main.py       - main file (select what to run)
-dataset.py    - Dataset classes (with or without prior information (sift), etc.)
-model.py      - Different models for training (currently U-Nets)
-train.py      - Training function
-test.py       - Testing / evaluation function
-utils.py      - Utility functions
-get_videos.py - Generates videos of the dataset (RGB, SeaError, Depth)
-log_plot.py   - Plots simple comparison of time/loss for different runs
-sift_test.py  - Experimental SIFT detection tests
+---
+
+## Getting Started
+
+1. **Download the dataset** from Kaggle.  
+2. Update the **dataset path** in the scripts:  
+3. pip install -r requirements.txt (into your Venv)
+
