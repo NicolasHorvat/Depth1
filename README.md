@@ -28,7 +28,8 @@ It is inspired by [this research](https://ieeexplore.ieee.org/abstract/document/
 ## Getting Started
 
 1. **Download the dataset** from Kaggle.  
-2. Update the **dataset path** in paths.py:  
+2. Update the **Canyons Dataset path** in paths.py:  
 3. pip install -r requirements.txt (into your Venv)
-4. experiment in main.py, Sift.py ect.
+4. Run Sift.py to get the sift priors
+5. experiment in main.py
 

@@ -17,6 +17,9 @@ def match_sift_features(img1, img2):
     kps1, des1 = sift.detectAndCompute(img1, None)
     kps2, des2 = sift.detectAndCompute(img2, None)
 
+    if des1 is None or des2 is None:
+        return np.array([]), np.array([])
+    
     # Match Descriptors
     bf = cv2.BFMatcher()
     matches = bf.knnMatch(des1, des2, k=2)
@@ -102,6 +105,7 @@ def save_all_sift_features_of_dataset(imgs_folder):
     # save path
     parent_folder_name = os.path.basename(os.path.dirname(os.path.normpath(imgs_folder)))
     folder_name = os.path.basename(os.path.normpath(imgs_folder))
+    print(f"Computing Sift matches for {parent_folder_name}_{folder_name}")
 
     script_dir = os.path.dirname(os.path.abspath(__file__))
     save_folder = os.path.join(script_dir, "datasets_sift_matches")
@@ -111,7 +115,7 @@ def save_all_sift_features_of_dataset(imgs_folder):
 
     # check if file already exists
     if os.path.exists(save_path):
-        print(f"-> Matches for {folder_name} already exist at {save_path} ->  Skipping computation")
+        print(f"-> Matches for {parent_folder_name}_{folder_name} already exist at {save_path} ->  Skipping computation")
         return save_path 
 
     sorted_imgs = sorted(os.listdir(imgs_folder))
@@ -144,7 +148,7 @@ def save_all_sift_features_of_dataset(imgs_folder):
     return save_path
 
 
-def create_sift_video(imgs_folder, fps=10):
+def create_sift_video(imgs_folder, fps=10, codec = "XVID", ext=".avi"):
     """
     Create a video showing SIFT matches across a dataset.
     """
@@ -154,14 +158,15 @@ def create_sift_video(imgs_folder, fps=10):
     folder_name = os.path.basename(os.path.normpath(imgs_folder))
 
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    save_folder = os.path.join(script_dir, "sift_videos")
+    save_folder = os.path.join(script_dir, f"sift_videos_{ext.lstrip('.')}")
     os.makedirs(save_folder, exist_ok=True)
 
-    save_path = os.path.join(save_folder, f"sift_video_{parent_folder_name}_{folder_name}.mp4")
+    name = f"sift_video_{parent_folder_name}_{folder_name}{ext}"
+    save_path = os.path.join(save_folder, name)
 
     # check if video already exists
     if os.path.exists(save_path):
-        print(f"-> Video for {parent_folder_name}_{folder_name} already exists at {save_path} ->  Skipping creation")
+        print(f"-> Video for {name} already exists at {save_path} ->  Skipped")
         return save_path
 
 
@@ -174,25 +179,25 @@ def create_sift_video(imgs_folder, fps=10):
     sorted_imgs = sorted(os.listdir(imgs_folder))
 
     # get video size from first image
-    frame_height, frame_width = cv2.imread(os.path.join(imgs_folder, sorted_imgs[0])).shape[:2]
+    H, W = cv2.imread(os.path.join(imgs_folder, sorted_imgs[0])).shape[:2]
 
     # initialize video writer
-    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-    out = cv2.VideoWriter(save_path, fourcc, fps, (frame_width, frame_height))
+    fourcc = cv2.VideoWriter_fourcc(*codec)
+    out = cv2.VideoWriter(save_path, fourcc, fps, (W, H))
 
     # loop through consecutive images
-    for i in tqdm(range(len(sorted_imgs)-1), desc="Progress", ncols = 100, leave= True):
-        img1_path = os.path.join(imgs_folder, sorted_imgs[i])
-        img2_path = os.path.join(imgs_folder, sorted_imgs[i+1])
+    for idx  in tqdm(range(len(sorted_imgs)-1), desc="Progress", ncols = 100, leave= True):
+        #img1_path = os.path.join(imgs_folder, sorted_imgs[idx])
+        img2_path = os.path.join(imgs_folder, sorted_imgs[idx+1])
 
-        img1 = cv2.imread(img1_path)
+        # img1 = cv2.imread(img1_path)
         img2 = cv2.imread(img2_path)
 
-        key = f"{sorted_imgs[i]}-{sorted_imgs[i+1]}"
+        key = f"{sorted_imgs[idx]}-{sorted_imgs[idx+1]}"
         if key not in all_matches:
             continue  # skip if no matches
 
-        pts1 = all_matches[key]['pts1']
+        #pts1 = all_matches[key]['pts1']
         pts2 = all_matches[key]['pts2']
 
         # copy image for visualization
@@ -200,39 +205,98 @@ def create_sift_video(imgs_folder, fps=10):
 
         # draw points on second image
         for (x, y) in pts2:
-            cv2.circle(vis, (int(x), int(y)), 5, (0, 255, 255), -1)
-
-        # draw lines to first image
-        #for (x1, y1), (x2, y2) in zip(pts1, pts2):
-        #    cv2.line(vis, (int(x1), int(y1)), (int(x2), int(y2)), (0, 0, 0), 2)
+            cv2.circle(vis, (int(x), int(y)), 3, (0, 255, 255), -1)
 
         out.write(vis)
 
     out.release()
-    print(f"Sift Video saved to {save_path}")
+    print(f"Sift Video saved at: {save_path}")
 
     return save_path
 
 
+def combine_sift_videos_side_by_side(canyon_path, fps=10, codec = "XVID", ext=".avi"):
+    """
+    combines the imgs seaErra sift videos horizontaly
+    """
 
-# ----------------------------Main-----------------------------------------------------------------
+    # save path
+    canyon_name = os.path.basename(os.path.normpath(canyon_path))
 
-# ----------------- get sift features of Canyon Datasets ------------------------------------------
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    save_dir = os.path.join(script_dir, f"sift_videos_{ext.lstrip('.')}")
+    os.makedirs(save_dir, exist_ok=True)
+
+    name = f"sift_video_{canyon_name}_imgs_seaErra{ext}"
+    save_path = os.path.join(save_dir, name)
+
+    # check if video already exists
+    if os.path.exists(save_path):
+        print(f"-> {name} already exists at {save_path} ->  Skipped")
+        return save_path
+
+    imgs_video = os.path.join(save_dir, f"sift_video_{canyon_name}_imgs{ext}")
+    seaErra_video = os.path.join(save_dir, f"sift_video_{canyon_name}_seaErra{ext}")
+
+    caps = [cv2.VideoCapture(v) for v in [imgs_video, seaErra_video]]
+
+    # Get the height and width from the first video
+    W = int(caps[0].get(cv2.CAP_PROP_FRAME_WIDTH))
+    H = int(caps[0].get(cv2.CAP_PROP_FRAME_HEIGHT))
+
+    fourcc = cv2.VideoWriter_fourcc(*codec)
+    out = cv2.VideoWriter(save_path, fourcc, fps, (W*2, H))
+
+    frame_count = int(caps[0].get(cv2.CAP_PROP_FRAME_COUNT))
+
+    print(f"Combining videos for {canyon_name}:")
+    for _ in tqdm(range(frame_count), desc="Progress", ncols = 100, leave= True):
+        frames = []
+
+        for cap in caps:
+            _, frame = cap.read()
+            frames.append(frame)
+        
+        combined_frame = np.hstack(frames)
+        out.write(combined_frame)
+
+    for cap in caps:
+        cap.release()
+    out.release()
+
+    print(f"Saved combined video: {save_path}")
+
+    return save_path
+
+
+# ----------------------------Main------------------------------------------------------------
+
+# ----------------- get sift features of Canyon Datasets -------------------------------------
 
 for path in tqdm(canyon_imgs_and_seaErra_paths, desc="Progress", ncols = 100, leave= True):
-
     sift_matches_tiny_canyon_imgs_path = save_all_sift_features_of_dataset(path)
 
-# ------------------- create a video of it ---------------------------------------------------------
+# ------------------- create a video of it ---------------------------------------------------
+
 for path in tqdm(canyon_imgs_and_seaErra_paths, desc="Progress", ncols = 100, leave= True):
-    
-    create_sift_video(path, fps=10)
+    create_sift_video(path, fps=10, codec = "mp4v", ext=".mp4")
 
 
-# ---------------- image visualization -------------------------------------------------------------
+for path in tqdm(canyons_paths, desc="Progress", ncols = 100, leave= True):
+    combine_sift_videos_side_by_side(path, fps=10, codec = "mp4v", ext=".mp4")
+
+
+# ---------------- image visualization -------------------------------------------------------
 sorted_tiny_canyon_imgs = sorted(os.listdir(tiny_canyon_imgs_path))
 img1_path = os.path.join(tiny_canyon_imgs_path, sorted_tiny_canyon_imgs[500])
 img2_path = os.path.join(tiny_canyon_imgs_path, sorted_tiny_canyon_imgs[501])
 
+sorted_tiny_canyon_seaErra = sorted(os.listdir(tiny_canyon_seaErra_path))
+img3_path = os.path.join(tiny_canyon_seaErra_path, sorted_tiny_canyon_seaErra[500])
+img4_path = os.path.join(tiny_canyon_seaErra_path, sorted_tiny_canyon_seaErra[501])
+
 visualize_sift_matches(img1_path, img2_path)
+visualize_sift_matches(img3_path, img4_path)
+
+# way more sift features detected in seaErra set than in imgs set
 

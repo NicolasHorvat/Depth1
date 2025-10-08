@@ -42,6 +42,14 @@ u_canyon_seaErra_path = os.path.join(u_canyon_path, "seaErra")
 #                                   Lists
 # ------------------------------------------------------------------------
 
+# Canyons_path
+canyons_paths = [
+    flatiron_path,
+    horse_canyon_path,
+    tiny_canyon_path,
+    u_canyon_path
+]
+
 # RGB images
 canyon_imgs_paths = [
     flatiron_imgs_path,
@@ -58,7 +66,7 @@ canyon_seaErra_paths = [
     u_canyon_seaErra_path
 ]
 
-# Both
+# rgb and seaErra paths
 canyon_imgs_and_seaErra_paths = [
     flatiron_imgs_path,
     horse_canyon_imgs_path,
@@ -68,6 +76,22 @@ canyon_imgs_and_seaErra_paths = [
     horse_canyon_seaErra_path,
     tiny_canyon_seaErra_path,
     u_canyon_seaErra_path
+]
+
+# rgb, seaErra and depth paths
+canyon_imgs_seaErra_and_depth_paths = [
+    flatiron_imgs_path,
+    horse_canyon_imgs_path,
+    tiny_canyon_imgs_path,
+    u_canyon_imgs_path,
+    flatiron_seaErra_path,
+    horse_canyon_seaErra_path,
+    tiny_canyon_seaErra_path,
+    u_canyon_seaErra_path,
+    flatiron_depth_path,
+    horse_canyon_depth_path,
+    tiny_canyon_depth_path,
+    u_canyon_depth_path
 ]
 
 # ------------------------------------------------------------------------

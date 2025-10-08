@@ -4,4 +4,8 @@ Depth1_venv/
 # Ignore video output folders (to large)
 videos_mp4/
 videos_avi/
-sift_videos/
+sift_videos_mp4/
+sift_videos_avi/
+
+# Ignore sift features (compute them with Sift.py)
+datasets_sift_matches/
