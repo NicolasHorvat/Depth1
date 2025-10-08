@@ -6,8 +6,10 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import torch.nn as nn
 import numpy as np
+from tqdm import tqdm
 
 from utils import combined_loss
+from dataset import combine_canyons
 
 def test_model(model, test_loader, device, results_folder, num_samples = 5, model_name = 'noName'):
     """
@@ -117,4 +119,40 @@ def test_model(model, test_loader, device, results_folder, num_samples = 5, mode
     print(f"Average masked combined loss on test set:, {test_loss:.4f}")
     print("\\"*50)
     
+    return test_loss
+
+
+
+def test_prior_only(dataset_class, dataset_paths, n = 100, batch_size = 4):
+    print("\\"*50)
+    print("Testing Prior-Only Baseline...")
+
+    _, _, test_dataset = combine_canyons(
+        paths = dataset_paths,
+        dataset_class = dataset_class,
+        n = n,
+        split = (0,0,1)
+        )
+
+    test_loader  = DataLoader(test_dataset, batch_size = batch_size, shuffle = False)
+
+    # Select Device
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    running_loss = 0.0
+    with torch.no_grad():
+        for batch in tqdm(test_loader, desc="Progress", ncols = 100, leave= True):
+            rgb_with_prior, depth = batch[:2]
+            prior = rgb_with_prior[:, 3:4, :, :]
+            depth = depth.to(device)
+            prior = prior.to(device)
+            
+            # loss
+            valid_mask = (depth > 0) & (~torch.isnan(depth))
+            batch_loss = combined_loss(prior, depth, mask=valid_mask)
+            running_loss += batch_loss.item()
+
+    test_loss = running_loss / len(test_loader)
+    print(f"Average masked combined loss using prior only: {test_loss:.4f}")
+    print("\\"*50)
     return test_loss

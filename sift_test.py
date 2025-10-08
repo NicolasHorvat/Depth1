@@ -1,4 +1,3 @@
-
 import os
 import cv2
 import torch
@@ -169,7 +168,7 @@ def test_sift(rgb_path, depth_path, idx=0):
 
 
     #  -------------- Plots -----------------
-    
+
     fig, ax = plt.subplots(1, 4, figsize=(32, 8))
 
     ax[0].imshow(img_full)

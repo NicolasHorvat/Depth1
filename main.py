@@ -32,7 +32,7 @@ import torch
 from torch.utils.data import DataLoader
 from dataset import *
 from train import train_model
-from test import test_model
+from test import *
 from model import *
 from utils import *
 
@@ -168,6 +168,7 @@ def train_test_model(dataset_paths = canyon_seaErra_depth_paths,
     print_title(f"END ({model_name})")
 
 
+
 # TODO: Simplify
 def test_saved_model(model_class, model_path, test_dataset, device='cuda', batch_size=1,
                      num_samples=5, folder=None, model_name=None):
@@ -236,6 +237,34 @@ if __name__ == "__main__":
         for model_class in model_class_list_4inChs:
             count_parameters(model_class())
 
+    #####################################################
+
+    # ------------ U-Net With Bins 4chs ---------------
+    if True:
+        train_test_model(
+            dataset_paths = canyon_seaErra_depth_paths,
+            model_class = UNetWithBins4chs,
+            model_name = None,
+            n_list = [1000],
+            num_epochs = 10,
+            batch_size = 4,
+            split = (0.7,0.2,0.1),
+            dataset_class = CanyonDatasetSiftPriors,
+            test_num_samples = 10
+            )
+        
+    # --------- Test just priors as depth map ------- 
+    if True:
+        test_prior_only(
+            dataset_class = CanyonDatasetSiftPriors,
+            dataset_paths = canyon_seaErra_depth_paths,
+            n = 100,    
+            batch_size = 4
+            )  
+    # (Average masked combined loss using prior only: 1.4186)
+        
+    #####################################################
+
     # ---------- Flexible U-Net TEST -----------------
     if False:
 
@@ -267,19 +296,6 @@ if __name__ == "__main__":
             test_num_samples = 10
             )
 
-    # ---------- U-Net, 4 Channels -----------------
-    if True:
-        train_test_model(
-            dataset_paths = canyon_seaErra_depth_paths,
-            model_class = UNet_4inChs_2L_12bc,
-            model_name = None,
-            n_list = [1000],
-            num_epochs = 3,
-            batch_size = 4,
-            split = (0.7,0.2,0.1),
-            dataset_class = CanyonDatasetSiftPriors,
-            test_num_samples = 10
-            )
 
     # ---------- U-Net, 4 Channels 256 -------------
     if False:

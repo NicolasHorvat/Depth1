@@ -30,7 +30,7 @@ def train_model(train_loader, val_loader, model, num_epochs, results_folder_path
     start_time = time.time()
     
     # Hyperparameters
-    lr = 1e-3
+    lr = 1.5e-3
     step_size = 2
     gamma = 0.9
 

@@ -17,6 +17,107 @@ Models I could/should try:
 '''
 
 
+class UNetWithBins(nn.Module):
+    """
+    U-Net with adaptive depth bins and predicted depth range
+    """
+    def __init__(
+        self,
+        input_channels=3,
+        num_layers=2,
+        base_channels=12,
+        num_bins=64
+    ):
+        super().__init__()
+        self.num_layers = num_layers
+        self.num_bins = num_bins
+
+        # ---------- Encoder ------------
+        self.encoders = nn.ModuleList() 
+        in_en = input_channels
+        out_en = base_channels
+
+        for _ in range(num_layers):
+            self.encoders.append(self.conv_relu_conv_relu(in_en, out_en))
+            in_en = out_en
+            out_en = in_en * 2
+
+        self.max_pooling = nn.MaxPool2d(2, 2)
+
+        # ---------- Bottleneck ----------
+        self.bottleneck = self.conv_relu_conv_relu(in_en, out_en)
+
+        # ---------- Decoder -------------
+        self.upconvs = nn.ModuleList()
+        self.decoders = nn.ModuleList()
+        in_de = out_en
+        out_de = in_en
+
+        for _ in range(num_layers - 1, -1, -1):
+            self.upconvs.append(nn.ConvTranspose2d(in_de, out_de, kernel_size=2, stride=2))
+            self.decoders.append(self.conv_relu_conv_relu(in_de, out_de))
+            in_de = out_de
+            out_de = in_de // 2
+
+        # ---------- Output layers ----------
+        # Bin logits per pixel
+        self.out_bins = nn.Conv2d(base_channels, num_bins, kernel_size=1)
+        # Depth range (single scalar per image)
+        self.out_range = nn.Sequential(
+            nn.AdaptiveAvgPool2d(1),  # global avg pooling -> [B, C, 1, 1]
+            nn.Conv2d(base_channels, 1, kernel_size=1),
+            nn.ReLU()  # ensure positive range
+        )
+
+    def conv_relu_conv_relu(self, in_channels, out_channels):
+        return nn.Sequential(
+            nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(out_channels, out_channels, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True)
+        )
+
+    def forward(self, x):
+        enc_feats = []
+
+        # --- Encoder ---
+        for enc in self.encoders:
+            x = enc(x)
+            enc_feats.append(x)
+            x = self.max_pooling(x)
+
+        # --- Bottleneck ---
+        x = self.bottleneck(x)
+
+        # --- Decoder ---
+        for i in range(self.num_layers - 1, -1, -1):
+            x = self.upconvs[self.num_layers - 1 - i](x)
+            x = torch.cat([x, enc_feats[i]], dim=1)
+            x = self.decoders[self.num_layers - 1 - i](x)
+
+        # --- Outputs ---
+        bin_logits = self.out_bins(x)  # [B, num_bins, H, W]
+        depth_range = self.out_range(x).squeeze(-1).squeeze(-1)  # [B]
+
+        # --- Convert bins to depth ---
+        bin_probs = torch.softmax(bin_logits, dim=1)  # [B, num_bins, H, W]
+        bin_centers = torch.linspace(0, 1, self.num_bins, device=x.device).view(1, self.num_bins, 1, 1)
+        depth_map = (bin_probs * bin_centers).sum(dim=1, keepdim=True)
+        depth_map = depth_map * depth_range.view(-1, 1, 1, 1)
+
+        return depth_map
+    
+
+class UNetWithBins3chs(UNetWithBins):
+    def __init__(self):
+        super().__init__(input_channels=3, num_layers=2, base_channels=12, num_bins=64)
+
+class UNetWithBins4chs(UNetWithBins):
+    def __init__(self):
+        super().__init__(input_channels=4, num_layers=2, base_channels=12, num_bins=64)
+
+
+
 # class torch.nn.Conv2d(in_channels, out_channels, kernel_size, stride=1, padding=0, dilation=1, groups=1, bias=True, padding_mode='zeros', device=None, dtype=None)
 # class torch.nn.MaxPool2d(kernel_size, stride=None, padding=0, dilation=1, return_indices=False, ceil_mode=False)
 
@@ -119,6 +220,7 @@ class UNet(nn.Module):
             #print("After decoder:", x.shape)                    # [4, 18, 304, 484]   , 2: [4, 9, 608, 968]
 
         return self.out_conv(x)
+    
 
 # ------------- 3Channels --------------
 class UNet_3inChs_1L_12bc(UNet):
