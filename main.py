@@ -7,10 +7,9 @@
 '''
 TODO:       
             Pretrained model
-            Sift features as Prior
-            K-fold Crossvalidation
+            Sift features as Prior - done -> patches?
+            K-fold Crossvalidation?
             Saveing Best Model -> whene val loss starts to increase - done
-            Update requirements.txt
 
 '''
 
@@ -155,6 +154,8 @@ def test_saved_model(model_class, model_path, test_dataset, device='cuda', batch
 
 if __name__ == "__main__":
 
+    print_title("main.py")
+
     # ------------------------------------------------
     #        select what you want to run
     # ------------------------------------------------
@@ -196,19 +197,19 @@ if __name__ == "__main__":
     # ------------ U-Net With Bins 4chs ---------------
     if True:
         train_test_model(
-            dataset_paths = canyon_seaErra_depth_paths,
-            model_class = UNetWithBins4chs,
-            model_name = None,
-            n_list = [1000],
+            dataset_paths = canyon_seaErra_depth_priors_paths,
+            model_class = UNetWithBinsPriors,
+            model_name = f"UNetWithBins_WithPriors_1000imgs(seaErra)",
+            n_list = [2000],
             num_epochs = 10,
             batch_size = 4,
             split = (0.7,0.2,0.1),
-            dataset_class = CanyonDatasetSiftPriors,
+            dataset_class = CanyonDatasetWithPriors,
             test_num_samples = 10
             )
         
     # --------- Test just priors as depth map ------- 
-    if True:
+    if False:
         test_prior_only(
             dataset_class = CanyonDatasetSiftPriors,
             dataset_paths = canyon_seaErra_depth_paths,
@@ -250,34 +251,6 @@ if __name__ == "__main__":
             test_num_samples = 10
             )
 
-
-    # ---------- U-Net, 4 Channels 256 -------------
-    if False:
-        train_test_model(
-            dataset_paths = canyon_seaErra_depth_paths,
-            model_class = UNet_4channels_256,
-            model_name = None,
-            n_list = [5, 10, 100, 500, 1000],
-            num_epochs = 10,
-            batch_size = 4,
-            split = (0.7,0.2,0.1),
-            dataset_class = CanyonDatasetWithPrior1,
-            test_num_samples = 10
-            )
-    
-    # ---------- ResNet U-Net, 3 Channels ----------
-    if False:
-        train_test_model(
-            dataset_paths = canyon_seaErra_depth_paths,
-            model_class = ResNetUNet,
-            model_name = None,
-            n_list = [10],
-            num_epochs = 4,
-            batch_size = 4,
-            split = (0.7,0.2,0.1),
-            dataset_class = CanyonDataset,
-            test_num_samples = 10
-            )
     
     # ---------- Testing Saved Model ---------------
     if False:

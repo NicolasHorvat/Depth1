@@ -50,3 +50,9 @@
 2025-10-07 21:13:52,UNetWithBinsTest_CanyonDataset_400imgs,487.64,0.886863
 2025-10-07 22:41:43,UNetWithBins4chs_CanyonDatasetSiftPriors_400imgs,4610.94,0.504715
 2025-10-08 03:13:42,UNetWithBins4chs_CanyonDatasetSiftPriors_1000imgs,11315.80,0.410461
+2025-10-10 12:54:48,UNet_5inChs_2L_12bc_CanyonDatasetWithPriors_40imgs,18.67,4.936938
+2025-10-10 12:58:03,UNet_5inChs_2L_12bc_CanyonDatasetWithPriors_100imgs,109.86,0.654663
+2025-10-10 13:19:06,UNet_5inChs_2L_12bc_CanyonDatasetWithPriors_1000imgs,1127.30,0.464719
+2025-10-10 13:45:34,UNet_5inChs_2L_12bc_dataset_class_1000imgs(seaErra),1139.31,0.360202
+2025-10-10 14:01:22,UNetWithBins_WithPriors_1000imgs(seaErra),570.50,0.464160
+2025-10-10 15:07:36,UNetWithBins_WithPriors_1000imgs(seaErra),3648.66,4.525300

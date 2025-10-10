@@ -50,3 +50,9 @@
 [2025-10-07 21:13:52] Model: UNetWithBinsTest_CanyonDataset_400imgs | Training Time: 487.64s or 8.13min or 0.14h | Test Loss: 0.886863
 [2025-10-07 22:41:43] Model: UNetWithBins4chs_CanyonDatasetSiftPriors_400imgs | Training Time: 4610.94s or 76.85min or 1.28h | Test Loss: 0.504715
 [2025-10-08 03:13:42] Model: UNetWithBins4chs_CanyonDatasetSiftPriors_1000imgs | Training Time: 11315.80s or 188.60min or 3.14h | Test Loss: 0.410461
+[2025-10-10 12:54:48] Model: UNet_5inChs_2L_12bc_CanyonDatasetWithPriors_40imgs | Training Time: 18.67s or 0.31min or 0.01h | Test Loss: 4.936938
+[2025-10-10 12:58:03] Model: UNet_5inChs_2L_12bc_CanyonDatasetWithPriors_100imgs | Training Time: 109.86s or 1.83min or 0.03h | Test Loss: 0.654663
+[2025-10-10 13:19:06] Model: UNet_5inChs_2L_12bc_CanyonDatasetWithPriors_1000imgs | Training Time: 1127.30s or 18.79min or 0.31h | Test Loss: 0.464719
+[2025-10-10 13:45:34] Model: UNet_5inChs_2L_12bc_dataset_class_1000imgs(seaErra) | Training Time: 1139.31s or 18.99min or 0.32h | Test Loss: 0.360202
+[2025-10-10 14:01:22] Model: UNetWithBins_WithPriors_1000imgs(seaErra) | Training Time: 570.50s or 9.51min or 0.16h | Test Loss: 0.464160
+[2025-10-10 15:07:36] Model: UNetWithBins_WithPriors_1000imgs(seaErra) | Training Time: 3648.66s or 60.81min or 1.01h | Test Loss: 4.525300

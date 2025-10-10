@@ -6,6 +6,13 @@ It is inspired by [this research](https://ieeexplore.ieee.org/abstract/document/
 -> The Canyons Dataset is **not included** in this repository. Download it from Kaggle and specify the path in the scripts.
 
 ---
+![eg. Sift Matches Plot](images_for_readme/sift_features_matches_plot_flatiron_idx800.png)
+![eg. Sift Priors Plot](images_for_readme/sift_priors_plot_flatiron_idx800.png)
+![eg. Test Plot](images_for_readme/test_grid_UNetWithBins_WithPriors_1000imgs(seaErra)_3.png)
+
+
+
+---
 
 ## Project Structure
 

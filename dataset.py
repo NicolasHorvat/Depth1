@@ -32,8 +32,8 @@ class CanyonDataset(Dataset):
     
 
 
-class CanyonDatasetWithSavedPriors(Dataset):
-    def __init__(self, rgb_folder, depth_folder, priors_folder):
+class CanyonDatasetWithPriors(Dataset):
+    def __init__(self, rgb_folder, depth_folder, nn_priors_folder, gauss_priors_folder):
         """
         Dataset that loads RGB, depth, and precomputed NN/Gaussian priors.
 
@@ -47,18 +47,21 @@ class CanyonDatasetWithSavedPriors(Dataset):
         self.rgb_files = sorted(os.listdir(rgb_folder))
         self.depth_files = sorted(os.listdir(depth_folder))
 
-        canyon_name = os.path.basename(os.path.dirname(rgb_folder))
-        folder_name = os.path.basename(rgb_folder)
+        self.nn_priors_folder = nn_priors_folder
+        self.gauss_priors_folder = gauss_priors_folder
+        self.nn_priors_files = sorted(os.listdir(self.nn_priors_folder))
+        self.gauss_priors_files = sorted(os.listdir(self.gauss_priors_folder))
 
-        # Paths to saved priors
-        self.nn_priors_path = os.path.join(priors_folder, f"{canyon_name}_{folder_name}_nn_priors")
-        self.gauss_priors_path = os.path.join(priors_folder, f"{canyon_name}_{folder_name}_gauss_priors")
-
-        self.nn_files = sorted(os.listdir(self.nn_priors_path))
-        self.gauss_files = sorted(os.listdir(self.gauss_priors_path))
-
+        '''
         if not (len(self.rgb_files) == len(self.depth_files) == len(self.nn_files) == len(self.gauss_files)):
+            print(len(self.rgb_files))
+            print(len(self.depth_files))
+            print(len(self.nn_files))
+            print(len(self.gauss_files))
             raise ValueError("Mismatch in number of RGB, depth, or prior files.")
+        '''
+
+
 
     def __len__(self):
         return len(self.rgb_files)
@@ -67,8 +70,8 @@ class CanyonDatasetWithSavedPriors(Dataset):
         # File paths
         rgb_path = os.path.join(self.rgb_folder, self.rgb_files[idx])
         depth_path = os.path.join(self.depth_folder, self.depth_files[idx])
-        nn_path = os.path.join(self.nn_priors_path, self.nn_files[idx])
-        gauss_path = os.path.join(self.gauss_priors_path, self.gauss_files[idx])
+        nn_path = os.path.join(self.nn_priors_folder, self.nn_priors_files[idx])
+        gauss_path = os.path.join(self.gauss_priors_folder, self.gauss_priors_files[idx])
 
         # Load files
         rgb = tifffile.imread(rgb_path) / 255.0
@@ -82,7 +85,9 @@ class CanyonDatasetWithSavedPriors(Dataset):
         nn_tensor = torch.tensor(nn_prior).unsqueeze(0).float()       # [1, H, W]
         gauss_tensor = torch.tensor(gauss_prior).unsqueeze(0).float() # [1, H, W]
 
-        return rgb_tensor, depth_tensor, nn_tensor, gauss_tensor
+        rgb_with_priors = torch.cat([rgb_tensor, nn_tensor, gauss_tensor], dim=0)  # [5,H,W]
+
+        return rgb_with_priors, depth_tensor
 
 
 
@@ -215,7 +220,7 @@ def split_dataset(dataset, train_frac=0.7, val_frac=0.2, test_frac=0.1):
     total_len = len(dataset)
     train_len = int(train_frac * total_len)
     val_len = int(val_frac * total_len)
-    test_len = total_len - train_len - val_len
+    _ = total_len - train_len - val_len
 
     indices = torch.randperm(total_len).tolist()  # shuffle indices
 
@@ -231,27 +236,26 @@ def split_dataset(dataset, train_frac=0.7, val_frac=0.2, test_frac=0.1):
 
 
 
-
+# num images n needs different logig if using mor than 900 or so n each (nol all canyons same size)
 def combine_canyons(paths, dataset_class = CanyonDataset, n = 100, split=(0.7, 0.2, 0.1), seed=None):
+    
     """
     Load multiple CanyonDatasets, sample n images from each, split into train/val/test, and combine.
     
     Args:
-        paths (rgb_folder, depth_folder)
-        n (int): Number of images to sample from each canyon
+        paths (rgb_folder, depth_folder, priors_folder)
+        n (int): Number of images to sample from each canyon 
         split_fractions (tuple): Fractions for train, val, test split (must sum to 1.0)
     
     Returns:
         train_combined, val_combined, test_combined
     """
 
-    train_sets = []
-    val_sets = []
-    test_sets = []
+    train_sets, val_sets, test_sets = [], [], []
 
-    for rgb_folder, depth_folder in paths:
+    for folders in paths:
 
-        dataset = dataset_class(rgb_folder, depth_folder)
+        dataset = dataset_class(*folders)
 
         # sample
         n = min(n, len(dataset))

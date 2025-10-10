@@ -116,6 +116,10 @@ class UNetWithBins4chs(UNetWithBins):
     def __init__(self):
         super().__init__(input_channels=4, num_layers=2, base_channels=12, num_bins=64)
 
+class UNetWithBinsPriors(UNetWithBins):
+    def __init__(self):
+        super().__init__(input_channels=5, num_layers=2, base_channels=12, num_bins=64)
+
 
 
 # class torch.nn.Conv2d(in_channels, out_channels, kernel_size, stride=1, padding=0, dilation=1, groups=1, bias=True, padding_mode='zeros', device=None, dtype=None)
@@ -274,6 +278,12 @@ class UNet_4inChs_2L_24bf(UNet):
 class UNet_4inChs_3L_24bf(UNet):
     def __init__(self):
         super().__init__(input_channels = 4, output_channels = 1, num_layers = 3, base_channels = 24)
+
+# ------------- 5Channels --------------
+
+class UNet_5inChs_2L_12bc(UNet):
+    def __init__(self):
+        super().__init__(input_channels = 5, output_channels = 1, num_layers = 2, base_channels = 12)
 
 
 
