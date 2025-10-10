@@ -98,6 +98,13 @@ canyon_imgs_seaErra_and_depth_paths = [
 #               Lists of image/depth or seaErra/depth pairs
 # ------------------------------------------------------------------------
 
+canyon_imgs_seaErra_depth_paths = [
+    (flatiron_imgs_path, flatiron_seaErra_path, flatiron_depth_path),
+    (horse_canyon_imgs_path, horse_canyon_seaErra_path, horse_canyon_depth_path),
+    (tiny_canyon_imgs_path, tiny_canyon_seaErra_path, tiny_canyon_depth_path),
+    (u_canyon_imgs_path, u_canyon_seaErra_path, u_canyon_depth_path)
+]
+
 canyon_imgs_depth_paths = [
     (flatiron_imgs_path, flatiron_depth_path),
     (horse_canyon_imgs_path, horse_canyon_depth_path),

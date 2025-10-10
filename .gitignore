@@ -7,8 +7,9 @@ videos_avi/
 sift_videos_mp4/
 sift_videos_avi/
 
-# Ignore sift features (compute them with Sift.py)
+# Ignore saved sift features and prior data (compute them with Sift.py)
 canyons_sift_features/
+canyons_priors/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -3,6 +3,7 @@ import cv2
 import torch
 from torch.utils.data import Dataset, Subset, ConcatDataset
 import tifffile
+import numpy as np
 import pickle
 
 
@@ -31,6 +32,61 @@ class CanyonDataset(Dataset):
     
 
 
+class CanyonDatasetWithSavedPriors(Dataset):
+    def __init__(self, rgb_folder, depth_folder, priors_folder):
+        """
+        Dataset that loads RGB, depth, and precomputed NN/Gaussian priors.
+
+        Args:
+            rgb_folder (str): Path to RGB images.
+            depth_folder (str): Path to depth maps.
+            priors_root (str): Path to priors folder
+        """
+        self.rgb_folder = rgb_folder
+        self.depth_folder = depth_folder
+        self.rgb_files = sorted(os.listdir(rgb_folder))
+        self.depth_files = sorted(os.listdir(depth_folder))
+
+        canyon_name = os.path.basename(os.path.dirname(rgb_folder))
+        folder_name = os.path.basename(rgb_folder)
+
+        # Paths to saved priors
+        self.nn_priors_path = os.path.join(priors_folder, f"{canyon_name}_{folder_name}_nn_priors")
+        self.gauss_priors_path = os.path.join(priors_folder, f"{canyon_name}_{folder_name}_gauss_priors")
+
+        self.nn_files = sorted(os.listdir(self.nn_priors_path))
+        self.gauss_files = sorted(os.listdir(self.gauss_priors_path))
+
+        if not (len(self.rgb_files) == len(self.depth_files) == len(self.nn_files) == len(self.gauss_files)):
+            raise ValueError("Mismatch in number of RGB, depth, or prior files.")
+
+    def __len__(self):
+        return len(self.rgb_files)
+
+    def __getitem__(self, idx):
+        # File paths
+        rgb_path = os.path.join(self.rgb_folder, self.rgb_files[idx])
+        depth_path = os.path.join(self.depth_folder, self.depth_files[idx])
+        nn_path = os.path.join(self.nn_priors_path, self.nn_files[idx])
+        gauss_path = os.path.join(self.gauss_priors_path, self.gauss_files[idx])
+
+        # Load files
+        rgb = tifffile.imread(rgb_path) / 255.0
+        depth = tifffile.imread(depth_path).astype('float32')
+        nn_prior = np.load(nn_path).astype('float32')
+        gauss_prior = np.load(gauss_path).astype('float32')
+
+        # Convert to tensors
+        rgb_tensor = torch.tensor(rgb).permute(2, 0, 1).float()       # [C, H, W]
+        depth_tensor = torch.tensor(depth).unsqueeze(0).float()       # [1, H, W]
+        nn_tensor = torch.tensor(nn_prior).unsqueeze(0).float()       # [1, H, W]
+        gauss_tensor = torch.tensor(gauss_prior).unsqueeze(0).float() # [1, H, W]
+
+        return rgb_tensor, depth_tensor, nn_tensor, gauss_tensor
+
+
+
+# old
 class CanyonDatasetSiftPriors(CanyonDataset):
     def __getitem__(self, idx):
         rgb, depth = super().__getitem__(idx)  # [3,H,W], [1,H,W]
@@ -96,8 +152,8 @@ class CanyonDatasetSiftPriors(CanyonDataset):
         rgb_with_prior = torch.cat([rgb, prior], dim=0)  # [4,H,W]
 
         return rgb_with_prior, depth#, known_points
-    
-    
+
+# old  
 class CanyonDatasetWithPrior(CanyonDataset):
     def __getitem__(self, idx):
         # Get original RGB and depth
@@ -113,7 +169,8 @@ class CanyonDatasetWithPrior(CanyonDataset):
         rgb_with_prior = torch.cat([rgb, prior], dim=0)  # [4, H, W]
 
         return rgb_with_prior, depth
-    
+
+# old
 class CanyonDatasetWithPrior1(CanyonDataset):
     def __getitem__(self, idx):
         rgb, depth = super().__getitem__(idx)  # [3,H,W] and [1,H,W]
